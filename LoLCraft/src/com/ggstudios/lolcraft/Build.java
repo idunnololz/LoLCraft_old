@@ -19,6 +19,7 @@ import com.ggstudios.utils.DebugLog;
 public class Build {
 	private static final String TAG = "Build";
 
+	private List<BuildRune> runeBuild;
 	private List<BuildItem> itemBuild;
 	private SparseIntArray itemDic;
 	
@@ -28,6 +29,8 @@ public class Build {
 	
 	private ChampionInfo champ;
 	private int champLevel;
+	
+	private static final int FLAG_SCALING = 0x80000000;
 
 	private static final int STAT_NULL = 0;
 	private static final int STAT_HP = 1;
@@ -46,16 +49,23 @@ public class Build {
 	private static final int STAT_LS = 13;
 	private static final int STAT_MSP = 14;
 	private static final int STAT_CDR = 15;
+	private static final int STAT_ARP = 16;
+	private static final int STAT_NRG = 17;
+	private static final int STAT_NRGR = 18;
+	private static final int STAT_GP10 = 19;
+	private static final int STAT_MRP = 20;
+	private static final int STAT_CD = 21;
+	private static final int STAT_DT = 22;
 	
-	private static final int STAT_TOTAL_AR = 20;
-	private static final int STAT_TOTAL_AD = 21;
-	private static final int STAT_TOTAL_HP = 22;
-	private static final int STAT_CD_MOD = 23;
+	private static final int STAT_TOTAL_AR = 40;
+	private static final int STAT_TOTAL_AD = 41;
+	private static final int STAT_TOTAL_HP = 42;
+	private static final int STAT_CD_MOD = 43;
 	
-	private static final int STAT_BONUS_AD = 30;
-	private static final int STAT_BONUS_HP = 31;
+	private static final int STAT_BONUS_AD = 50;
+	private static final int STAT_BONUS_HP = 51;
 
-	private static final int MAX_STATS = 40;
+	private static final int MAX_STATS = 60;
 	private static final int MAX_ACTIVE_ITEMS = 6;
 
 	private List<BuildObserver> observers = new ArrayList<BuildObserver>();
@@ -102,6 +112,26 @@ public class Build {
 		statKeyToIndex.put("PercentSpellBlockMod", 		STAT_NULL);
 		statKeyToIndex.put("PercentSpellVampMod", 		STAT_NULL);	// this stat is actually useful but not doc'd
 		
+		statKeyToIndex.put("rFlatArmorModPerLevel", 			STAT_AR | FLAG_SCALING);	
+		statKeyToIndex.put("rFlatArmorPenetrationMod", 			STAT_ARP);	
+		statKeyToIndex.put("rFlatArmorPenetrationModPerLevel", 	STAT_ARP | FLAG_SCALING);
+		statKeyToIndex.put("rFlatEnergyModPerLevel", 			STAT_NRG | FLAG_SCALING);	
+		statKeyToIndex.put("rFlatEnergyRegenModPerLevel", 		STAT_NRGR | FLAG_SCALING);	
+		statKeyToIndex.put("rFlatGoldPer10Mod", 				STAT_GP10);	
+		statKeyToIndex.put("rFlatHPModPerLevel", 				STAT_HP | FLAG_SCALING);	
+		statKeyToIndex.put("rFlatHPRegenModPerLevel", 			STAT_HPR | FLAG_SCALING);	
+		statKeyToIndex.put("rFlatMPModPerLevel", 				STAT_MP | FLAG_SCALING);	
+		statKeyToIndex.put("rFlatMPRegenModPerLevel", 			STAT_MPR | FLAG_SCALING);	
+		statKeyToIndex.put("rFlatMagicDamageModPerLevel", 		STAT_AP | FLAG_SCALING);	
+		statKeyToIndex.put("rFlatMagicPenetrationMod", 			STAT_MRP);	
+		statKeyToIndex.put("rFlatMagicPenetrationModPerLevel", 	STAT_MRP | FLAG_SCALING);
+		statKeyToIndex.put("rFlatPhysicalDamageModPerLevel", 	STAT_AD | FLAG_SCALING);	
+		statKeyToIndex.put("rFlatSpellBlockModPerLevel", 		STAT_MR | FLAG_SCALING);
+		statKeyToIndex.put("rPercentCooldownMod", 				STAT_CD);	
+		statKeyToIndex.put("rPercentCooldownModPerLevel", 		STAT_CD | FLAG_SCALING);
+		statKeyToIndex.put("rPercentTimeDeadMod", 				STAT_DT);	
+		statKeyToIndex.put("rPercentTimeDeadModPerLevel", 		STAT_DT | FLAG_SCALING);	
+		
 		// keys used for skills...
 		statKeyToIndex.put("spelldamage", 			STAT_AP);
 		statKeyToIndex.put("attackdamage", 			STAT_TOTAL_AD);
@@ -131,6 +161,7 @@ public class Build {
 
 	public Build() {
 		itemBuild = new ArrayList<BuildItem>();
+		runeBuild = new ArrayList<BuildRune>();
 		itemDic = new SparseIntArray();
 		
 		if (itemLibrary == null) {
@@ -236,6 +267,10 @@ public class Build {
 		
 		int active = 0;
 		
+		for (BuildRune r : runeBuild) {
+			appendStat(r.info);
+		}
+		
 		for (BuildItem item : itemBuild) {
 			item.active = false;
 		}
@@ -269,9 +304,27 @@ public class Build {
 		}
 	}
 	
+	private void appendStat(RuneInfo rune) {
+		Iterator<?> iter = rune.stats.keys();
+		while (iter.hasNext()) {
+			String key = (String) iter.next();
+			try {
+				int f = statKeyToIndex.get(key);
+				if ((f & FLAG_SCALING) != 0) {
+					stats[f & ~FLAG_SCALING] += rune.stats.getDouble(key) * (champLevel + 1);
+				} else {
+					stats[f] += rune.stats.getDouble(key);
+				}
+
+			} catch (JSONException e) {
+				DebugLog.e(TAG, e);
+			}
+		}
+	}
+	
 	private void calculateTotalStats() {
 		// do some stat normalization...
-		stats[STAT_CDR] = Math.min(0.4, stats[STAT_CDR]);
+		stats[STAT_CDR] = Math.min(0.4, stats[STAT_CDR] - stats[STAT_CD]);
 		
 		stats[STAT_TOTAL_AR] = stats[STAT_AR] + champ.ar + champ.arG * champLevel;
 		stats[STAT_TOTAL_AD] = stats[STAT_AD] + champ.ad + champ.adG * champLevel;
@@ -280,6 +333,16 @@ public class Build {
 		
 		stats[STAT_BONUS_AD] = stats[STAT_TOTAL_AD] - champ.ad;
 		stats[STAT_BONUS_HP] = stats[STAT_TOTAL_HP] - champ.hp;
+	}
+	
+	public BuildRune addRune(RuneInfo rune) {
+		BuildRune r = new BuildRune(rune);
+		runeBuild.add(r);
+		
+		recalculateStats();
+		notifyRuneAdded(r);
+		
+		return r;
 	}
 	
 	public void setChampion(ChampionInfo champ) {
@@ -311,6 +374,12 @@ public class Build {
 	private void notifyItemAdded(BuildItem item) {
 		for (BuildObserver o : observers) {
 			o.onItemAdded(this, item);
+		}
+	}
+	
+	private void notifyRuneAdded(BuildRune rune) {
+		for (BuildObserver o : observers) {
+			o.onRuneAdded(this, rune);
 		}
 	}
 
@@ -435,7 +504,9 @@ public class Build {
 	public static interface BuildObserver {
 		public void onBuildChanged(Build build);
 		public void onItemAdded(Build build, BuildItem item);
+		public void onRuneAdded(Build build, BuildRune rune);
 		public void onBuildStatsChanged();
+		
 	}
 	
 	public static class BuildItem {
@@ -454,6 +525,16 @@ public class Build {
 		
 		public int getId() {
 			return info.id;
+		}
+	}
+	
+	public static class BuildRune {
+		RuneInfo info;
+		int count;
+		
+		private BuildRune(RuneInfo info) {
+			this.info = info;
+			count = 1;
 		}
 	}
 }

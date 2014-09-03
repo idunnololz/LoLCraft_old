@@ -281,63 +281,97 @@
             </TableRow>
         </LinearLayout>
 
-        <RelativeLayout
-            android:id="@+id/scrollViewParent"
+        <LinearLayout
+            android:id="@+id/item_build"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_below="@+id/stats"
-            android:background="@color/lightgrey"
             android:orientation="vertical" >
 
-            <ImageButton
-                android:id="@+id/btnTrash"
-                android:layout_width="match_parent"
-                android:layout_height="30dp"
-                android:layout_alignParentBottom="true"
-                android:background="@drawable/themed_transition_drawable"
-                android:padding="5dp"
-                android:scaleType="centerInside"
-                android:src="@drawable/ic_trash"
-                android:visibility="invisible" />
-
-            <com.ggstudios.views.InterceptingHorizontalScrollView
-                android:id="@+id/scrollView"
-                android:layout_width="match_parent"
+            <TextView
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:scrollbars="horizontal" >
+                android:layout_marginLeft="10dp"
+                android:text="@string/item_build"
+                android:textAppearance="?android:attr/textAppearanceMedium" />
 
-                <RelativeLayout
-                    android:layout_width="wrap_content"
+            <RelativeLayout
+                android:id="@+id/scrollViewParent"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="@color/lightgrey"
+                android:orientation="vertical" >
+
+                <ImageButton
+                    android:id="@+id/btnTrash"
+                    android:layout_width="match_parent"
+                    android:layout_height="30dp"
+                    android:layout_alignParentBottom="true"
+                    android:background="@drawable/themed_transition_drawable"
+                    android:padding="5dp"
+                    android:scaleType="centerInside"
+                    android:src="@drawable/ic_trash"
+                    android:visibility="invisible" />
+
+                <com.ggstudios.views.InterceptingHorizontalScrollView
+                    android:id="@+id/scrollView"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="vertical" >
+                    android:scrollbars="horizontal" >
 
-                    <com.ggstudios.views.RearrangeableLinearLayout
-                        android:id="@+id/build"
-                        android:layout_width="wrap_content"
-                        android:layout_height="90dp"
-                        android:orientation="horizontal"
-                        android:paddingLeft="10dp"
-                        android:paddingRight="10dp" >
-                    </com.ggstudios.views.RearrangeableLinearLayout>
-
-                    <SeekBar
-                        android:id="@+id/seekBar"
+                    <RelativeLayout
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_alignLeft="@+id/build"
-                        android:layout_alignParentBottom="true"
-                        android:visibility="invisible" />
-                </RelativeLayout>
-            </com.ggstudios.views.InterceptingHorizontalScrollView>
-        </RelativeLayout>
+                        android:orientation="vertical" >
 
-        <Button
-            android:id="@+id/addItem"
+                        <com.ggstudios.views.RearrangeableLinearLayout
+                            android:id="@+id/build"
+                            android:layout_width="wrap_content"
+                            android:layout_height="90dp"
+                            android:orientation="horizontal"
+                            android:paddingLeft="10dp"
+                            android:paddingRight="10dp" >
+                        </com.ggstudios.views.RearrangeableLinearLayout>
+
+                        <SeekBar
+                            android:id="@+id/seekBar"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_alignLeft="@+id/build"
+                            android:layout_alignParentBottom="true"
+                            android:visibility="invisible" />
+                    </RelativeLayout>
+                </com.ggstudios.views.InterceptingHorizontalScrollView>
+            </RelativeLayout>
+
+            <Button
+                android:id="@+id/addItem"
+                android:layout_width="wrap_content"
+                android:layout_height="60dp"
+                android:layout_gravity="center"
+                android:text="@string/add_item" />
+        </LinearLayout>
+
+        <LinearLayout
             android:layout_width="wrap_content"
-            android:layout_height="60dp"
-            android:layout_below="@+id/scrollViewParent"
-            android:layout_gravity="center_vertical"
-            android:text="@string/add_item" />
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/item_build"
+            android:orientation="vertical" >
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="10dp"
+                android:text="@string/runes"
+                android:textAppearance="?android:attr/textAppearanceMedium" />
+
+            <Button
+                android:id="@+id/addRunes"
+                android:layout_width="wrap_content"
+                android:layout_height="60dp"
+                android:layout_gravity="center"
+                android:text="@string/add_runes" />
+        </LinearLayout>
     </RelativeLayout>
 
 </ScrollView>

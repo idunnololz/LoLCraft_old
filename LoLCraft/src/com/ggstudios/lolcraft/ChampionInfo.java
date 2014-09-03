@@ -97,6 +97,8 @@ public class ChampionInfo {
 		String scaledDesc;
 
 		String[] effects;
+		
+		String defaultKey;
 
 		private static Pattern argPattern = Pattern.compile("\\{\\{ ([a-z][0-9]+) \\}\\}");
 

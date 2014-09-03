@@ -22,13 +22,14 @@ import com.actionbarsherlock.app.SherlockActivity;
 import com.actionbarsherlock.app.SherlockFragmentActivity;
 import com.actionbarsherlock.view.MenuItem;
 import com.ggstudios.lolcraft.ItemPickerDialogFragment.ItemPickerDialogListener;
+import com.ggstudios.lolcraft.RunePickerDialogFragment.RunePickerDialogListener;
 import com.ggstudios.lolcraft.SplashFetcher.OnDrawableRetrievedListener;
 import com.ggstudios.utils.DebugLog;
 import com.ggstudios.utils.Utils;
 import com.ggstudios.views.TabIndicator;
 import com.ggstudios.views.TabIndicator.TabItem;
 
-public class CraftActivity extends SherlockFragmentActivity implements ItemPickerDialogListener {
+public class CraftActivity extends SherlockFragmentActivity implements ItemPickerDialogListener, RunePickerDialogListener {
 	private static final String TAG = "CraftActivity";
 
 	public static final String EXTRA_CHAMPION_ID = "champId";
@@ -148,5 +149,10 @@ public class CraftActivity extends SherlockFragmentActivity implements ItemPicke
 	@Override
 	public void onItemPicked(ItemInfo item) {
 		build.addItem(item);
+	}
+
+	@Override
+	public void onRunePicked(RuneInfo rune) {
+		build.addRune(rune);
 	}
 }

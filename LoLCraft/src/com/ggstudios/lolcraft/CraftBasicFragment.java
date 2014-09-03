@@ -39,6 +39,7 @@ import android.widget.TextView;
 import com.actionbarsherlock.app.SherlockFragment;
 import com.ggstudios.lolcraft.Build.BuildItem;
 import com.ggstudios.lolcraft.Build.BuildObserver;
+import com.ggstudios.lolcraft.Build.BuildRune;
 import com.ggstudios.utils.DebugLog;
 import com.ggstudios.utils.Utils;
 import com.ggstudios.views.RearrangeableLinearLayout;
@@ -71,6 +72,7 @@ public class CraftBasicFragment extends SherlockFragment implements BuildObserve
 	private TextView txtAr;
 	private TextView txtMr;
 	private Button addItem;
+	private Button addRunes;
 	private Spinner levelSpinner;
 	private RearrangeableLinearLayout buildContainer;
 	private HorizontalScrollView buildScrollView;
@@ -332,6 +334,18 @@ public class CraftBasicFragment extends SherlockFragment implements BuildObserve
 			}
 
 		});
+		
+		addRunes = (Button) rootView.findViewById(R.id.addRunes);
+		addRunes.setOnClickListener(new OnClickListener() {
+
+			@Override
+			public void onClick(View v) {
+				FragmentManager fm = getActivity().getSupportFragmentManager();
+				RunePickerDialogFragment dialog = new RunePickerDialogFragment();
+				dialog.show(fm, "dialog");
+			}
+
+		});
 
 		levelSpinner.setOnItemSelectedListener(new OnItemSelectedListener() {
 
@@ -451,6 +465,10 @@ public class CraftBasicFragment extends SherlockFragment implements BuildObserve
 	@Override
 	public void onItemAdded(Build build, BuildItem item) {
 		updateBuild(item);
+	}
+	
+	@Override
+	public void onRuneAdded(Build build, BuildRune rune) {
 	}
 
 	@Override

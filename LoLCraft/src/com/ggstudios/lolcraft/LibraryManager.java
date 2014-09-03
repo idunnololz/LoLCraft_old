@@ -7,6 +7,7 @@ public class LibraryManager {
 	
 	private ChampionLibrary championLibrary;
 	private ItemLibrary itemLibrary;
+	private RuneLibrary runeLibrary;
 	private Context context;
 	
 	public static void initInstance(Context context) {
@@ -20,6 +21,7 @@ public class LibraryManager {
 	private LibraryManager(Context context){
 		championLibrary = new ChampionLibrary(context);
 		itemLibrary = new ItemLibrary();
+		runeLibrary = new RuneLibrary();
 		
 		this.context = context;
 	}
@@ -30,6 +32,10 @@ public class LibraryManager {
 	
 	public ItemLibrary getItemLibrary() {
 		return itemLibrary;
+	}
+	
+	public RuneLibrary getRuneLibrary() {
+		return runeLibrary;
 	}
 	
 }

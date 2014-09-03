@@ -23,5 +23,9 @@
     <string name="stat_level">Level</string>
     
     <string name="add_item">Add Item</string>	
+    <string name="item_build">Item Build</string>
+    <string name="runes">Runes</string>
+    
+    <string name="add_runes">Add Runes</string>
 
 </resources>
