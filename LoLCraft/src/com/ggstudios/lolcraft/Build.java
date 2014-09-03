@@ -38,7 +38,7 @@ public class Build {
 	private static final int STAT_MP = 3;
 	private static final int STAT_MPR = 4;
 	private static final int STAT_AD = 5;
-	private static final int STAT_BASE_AS = 6;
+	//private static final int STAT_BASE_AS = asdf;
 	private static final int STAT_ASP = 6;
 	private static final int STAT_AR = 7;
 	private static final int STAT_MR = 8;
@@ -138,6 +138,7 @@ public class Build {
 		statKeyToIndex.put("bonushealth", 			STAT_BONUS_HP);
 		statKeyToIndex.put("armor", 				STAT_TOTAL_AR);
 		statKeyToIndex.put("bonusattackdamage", 	STAT_BONUS_AD);
+		statKeyToIndex.put("health", 				STAT_TOTAL_HP);
 		
 		// special keys...
 		statKeyToIndex.put("@special.BraumWArmor", 	STAT_NULL);

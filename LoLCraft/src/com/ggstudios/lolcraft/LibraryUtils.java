@@ -437,7 +437,7 @@ public class LibraryUtils {
 			}
 		}
 		n = n.replace("Penetration", "Pen");
-		n = n.toLowerCase();
+		n = n.toLowerCase(Locale.US);
 		return n;
 	}
 }

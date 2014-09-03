@@ -3,29 +3,37 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent" >
 
+    <com.ggstudios.views.LockableScrollView
+        android:id="@+id/splashScrollView"
+        android:layout_width="match_parent"
+        android:layout_height="120dp"
+        android:layout_alignParentTop="true"
+        android:background="@color/grey"
+        android:scrollbars="none" >
+
+        <ImageView
+            android:id="@+id/splash"
+            android:layout_width="match_parent"
+            android:layout_height="160dp"
+            android:src="@drawable/splash_placeholder"
+            android:adjustViewBounds="true"
+            android:scaleType="centerCrop" />
+    </com.ggstudios.views.LockableScrollView>
+
     <com.ggstudios.views.TabIndicator
         android:id="@+id/tab_indicator"
-        android:layout_below="@+id/splash"
-        android:layout_toRightOf="@+id/portrait"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_alignBottom="@+id/portrait" />
+        android:layout_alignBottom="@+id/portrait"
+        android:layout_below="@+id/splashScrollView"
+        android:layout_toRightOf="@+id/portrait" />
 
     <com.ggstudios.views.CustomViewPager
         xmlns:android="http://schemas.android.com/apk/res/android"
         android:id="@+id/pager"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_below="@+id/tab_indicator"/>
-
-    <ImageView
-        android:id="@+id/splash"
-        android:layout_width="match_parent"
-        android:layout_height="120dp"
-        android:layout_alignParentTop="true"
-        android:adjustViewBounds="true"
-        android:background="@color/grey"
-        android:scaleType="centerCrop" />
+        android:layout_below="@+id/tab_indicator" />
 
     <ImageView
         android:id="@+id/portrait"
@@ -34,8 +42,8 @@
         android:layout_alignParentLeft="true"
         android:layout_alignParentTop="true"
         android:layout_marginLeft="10dp"
-        android:paddingTop="10dp"
         android:layout_marginTop="?android:attr/actionBarSize"
+        android:paddingTop="10dp"
         android:src="@drawable/champion_placeholder" />
 
     <TextView

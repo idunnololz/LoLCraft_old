@@ -365,6 +365,28 @@
                 android:text="@string/runes"
                 android:textAppearance="?android:attr/textAppearanceMedium" />
 
+            <com.ggstudios.views.InterceptingHorizontalScrollView
+                android:id="@+id/runeScrollView"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:scrollbars="horizontal" >
+
+                <RelativeLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical" >
+
+                    <LinearLayout
+                        android:id="@+id/runes"
+                        android:layout_width="wrap_content"
+                        android:layout_height="90dp"
+                        android:orientation="horizontal"
+                        android:paddingLeft="10dp"
+                        android:paddingRight="10dp" >
+                    </LinearLayout>
+                </RelativeLayout>
+            </com.ggstudios.views.InterceptingHorizontalScrollView>
+
             <Button
                 android:id="@+id/addRunes"
                 android:layout_width="wrap_content"

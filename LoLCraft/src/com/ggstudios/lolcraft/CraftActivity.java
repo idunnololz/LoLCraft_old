@@ -1,6 +1,5 @@
 package com.ggstudios.lolcraft;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -15,10 +14,11 @@ import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentPagerAdapter;
 import android.support.v4.app.NavUtils;
 import android.support.v4.view.ViewPager;
+import android.support.v4.view.ViewPager.OnPageChangeListener;
+import android.view.View.MeasureSpec;
 import android.widget.ImageView;
 import android.widget.TextView;
 
-import com.actionbarsherlock.app.SherlockActivity;
 import com.actionbarsherlock.app.SherlockFragmentActivity;
 import com.actionbarsherlock.view.MenuItem;
 import com.ggstudios.lolcraft.ItemPickerDialogFragment.ItemPickerDialogListener;
@@ -26,6 +26,7 @@ import com.ggstudios.lolcraft.RunePickerDialogFragment.RunePickerDialogListener;
 import com.ggstudios.lolcraft.SplashFetcher.OnDrawableRetrievedListener;
 import com.ggstudios.utils.DebugLog;
 import com.ggstudios.utils.Utils;
+import com.ggstudios.views.LockableScrollView;
 import com.ggstudios.views.TabIndicator;
 import com.ggstudios.views.TabIndicator.TabItem;
 
@@ -33,6 +34,8 @@ public class CraftActivity extends SherlockFragmentActivity implements ItemPicke
 	private static final String TAG = "CraftActivity";
 
 	public static final String EXTRA_CHAMPION_ID = "champId";
+
+	private static final int PARALLAX_WIDTH_DP = 30;
 
 	private ChampionInfo info;
 
@@ -42,7 +45,8 @@ public class CraftActivity extends SherlockFragmentActivity implements ItemPicke
 	private TextView title;
 	private ViewPager pager;
 	private TabIndicator tabIndicator;
-	
+	private LockableScrollView splashScroll;
+
 	private Build build;
 
 	@Override
@@ -57,17 +61,20 @@ public class CraftActivity extends SherlockFragmentActivity implements ItemPicke
 		build = new Build();
 		build.setChampion(info);
 		StateManager.getInstance().setActiveBuild(build);
-		
+
 		portrait = (ImageView) findViewById(R.id.portrait);
 		splash = (ImageView) findViewById(R.id.splash);
 		name = (TextView) findViewById(R.id.name);
 		title = (TextView) findViewById(R.id.title);
 		pager = (ViewPager) findViewById(R.id.pager);
 		tabIndicator = (TabIndicator) findViewById(R.id.tab_indicator);
-		
+		splashScroll = (LockableScrollView) findViewById(R.id.splashScrollView);
+
+		splashScroll.setScrollingEnabled(false);
+
 		Bundle args = new Bundle();
 		args.putInt(EXTRA_CHAMPION_ID, champId);
-		
+
 		// construct the tabs...
 		List<TabItem> tabs = new ArrayList<TabIndicator.TabItem>();
 		tabs.add(new TabItem("Basic", CraftBasicFragment.class.getName(), args));
@@ -76,10 +83,34 @@ public class CraftActivity extends SherlockFragmentActivity implements ItemPicke
 		TabAdapter adapter = new TabAdapter(this, getSupportFragmentManager(), tabs);
 		pager.setAdapter(adapter);
 		tabIndicator.setAdapter(pager);
-		
+
 		pager.setPageMargin((int) Utils.convertDpToPixel(20, this));
 		pager.setPageMarginDrawable(new ColorDrawable(Color.LTGRAY));
-		
+
+		final int parallaxW = (int) Utils.convertDpToPixel(PARALLAX_WIDTH_DP, this);
+		final int parallaxPer = parallaxW / adapter.getCount();
+
+		tabIndicator.setOnPageChangeListener(new OnPageChangeListener() {
+
+			@Override
+			public void onPageScrollStateChanged(int arg0) {
+				// TODO Auto-generated method stub
+
+			}
+
+			@Override
+			public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
+				splashScroll.scrollTo((int) (parallaxPer * position + parallaxPer * positionOffset), splashScroll.getScrollY());
+			}
+
+			@Override
+			public void onPageSelected(int arg0) {
+				// TODO Auto-generated method stub
+
+			}
+
+		});
+
 		if (info.icon != null) {
 			portrait.setImageDrawable(info.icon);
 		}
@@ -91,10 +122,23 @@ public class CraftActivity extends SherlockFragmentActivity implements ItemPicke
 			@Override
 			public void onDrawableRetrieved(Drawable d) {
 				splash.setImageDrawable(d);
+
+				if (splash.getWidth() == 0) {
+					splash.post(new Runnable() {
+
+						@Override
+						public void run() {
+							setUpSplash(parallaxW);
+						}
+
+					});
+				} else {
+					setUpSplash(parallaxW);
+				}
 			}
 
 		});
-		
+
 		new AsyncTask<ChampionInfo, Void, ChampionInfo>() {
 
 			@Override
@@ -103,8 +147,35 @@ public class CraftActivity extends SherlockFragmentActivity implements ItemPicke
 				LibraryUtils.completeChampionInfo(CraftActivity.this, info);
 				return null;
 			}
-			
+
 		}.execute(info);
+	}
+
+	private void setUpSplash(int parallaxW) {
+		splash.getLayoutParams().width = splashScroll.getWidth() + parallaxW;
+		splashScroll.requestLayout();
+
+		int w = MeasureSpec.makeMeasureSpec(splash.getLayoutParams().width, MeasureSpec.EXACTLY);
+		int h = MeasureSpec.makeMeasureSpec(Integer.MAX_VALUE, MeasureSpec.UNSPECIFIED);
+		splash.measure(w, h);
+
+		int y = (splash.getMeasuredHeight() - splashScroll.getHeight()) / 2;
+		
+		DebugLog.d(TAG, "y:" + y);
+
+		if (y > 0) {
+			splashScroll.scrollTo(0, y);
+		} else {
+			splashScroll.post(new Runnable() {
+
+				@Override
+				public void run() {
+					int y = (splash.getMeasuredHeight() - splashScroll.getLayoutParams().height) / 2;
+					splashScroll.scrollTo(0, y);
+				}
+
+			});
+		}
 	}
 
 	@Override
@@ -117,34 +188,34 @@ public class CraftActivity extends SherlockFragmentActivity implements ItemPicke
 		}
 		return super.onOptionsItemSelected(item);
 	}
-	
+
 	public static class TabAdapter extends FragmentPagerAdapter implements TabIndicator.TabAdapter {
 		private List<TabItem> items;
 		private Context context;
-		
-        public TabAdapter(Context con, FragmentManager fm, List<TabItem> items) {
-            super(fm);
-            
-            this.items = items;
-            this.context = con;
-        }
 
-        @Override
-        public int getCount() {
-            return items.size();
-        }
+		public TabAdapter(Context con, FragmentManager fm, List<TabItem> items) {
+			super(fm);
 
-        @Override
-        public Fragment getItem(int position) {
-        	TabItem i = items.get(position);
-            return Fragment.instantiate(context, i.getClassName(), i.getArguments());
-        }
+			this.items = items;
+			this.context = con;
+		}
+
+		@Override
+		public int getCount() {
+			return items.size();
+		}
+
+		@Override
+		public Fragment getItem(int position) {
+			TabItem i = items.get(position);
+			return Fragment.instantiate(context, i.getClassName(), i.getArguments());
+		}
 
 		@Override
 		public TabItem getTab(int position) {
 			return items.get(position);
 		}
-    }
+	}
 
 	@Override
 	public void onItemPicked(ItemInfo item) {

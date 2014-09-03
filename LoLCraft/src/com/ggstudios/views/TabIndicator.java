@@ -19,6 +19,7 @@ public class TabIndicator extends ViewGroup implements OnPageChangeListener {
 	private ViewPager pager;
 	private TabAdapter adapter;
 	private Context context;
+	private OnPageChangeListener onPageChangeListener;
 
 	public TabIndicator(Context context) {
 		super(context);
@@ -46,14 +47,14 @@ public class TabIndicator extends ViewGroup implements OnPageChangeListener {
 		this.adapter = (TabAdapter) pager.getAdapter();
 
 		pager.setOnPageChangeListener(this);
-		
+
 		removeAllViews();
 
 		if (adapter != null) {
 			Rect bounds = new Rect();
-			
+
 			float totalW = 0f;
-			
+
 			for (int i = 0; i < adapter.getCount(); i++) {
 				TabItem item = adapter.getTab(i);
 
@@ -62,23 +63,23 @@ public class TabIndicator extends ViewGroup implements OnPageChangeListener {
 				tv.setBackgroundColor(Color.GRAY);
 				tv.setGravity(Gravity.CENTER);
 				addView(tv);
-				
+
 				final int index = i;
-				
+
 				tv.setOnClickListener(new OnClickListener() {
 
 					@Override
 					public void onClick(View v) {
 						pager.setCurrentItem(index);
 					}
-					
+
 				});
-				
+
 				tv.getPaint().getTextBounds(item.tabName, 0, item.tabName.length(), bounds);
 				item.stringW = bounds.width();
 				totalW += item.stringW;
 			}
-			
+
 			for (int i = 0; i < adapter.getCount(); i++) {
 				TabItem item = adapter.getTab(i);
 				item.ratioW = item.stringW / totalW;
@@ -91,22 +92,25 @@ public class TabIndicator extends ViewGroup implements OnPageChangeListener {
 
 	@Override
 	public void onPageScrollStateChanged(int state) {
-		// TODO Auto-generated method stub
-
+		if (onPageChangeListener != null)
+			onPageChangeListener.onPageScrollStateChanged(state);
 	}
 
 	@Override
 	public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
-		// TODO Auto-generated method stub
-
+		if (onPageChangeListener != null)
+			onPageChangeListener.onPageScrolled(position, positionOffset, positionOffsetPixels);
 	}
 
 	@Override
 	public void onPageSelected(int position) {
+		if (onPageChangeListener != null)
+			onPageChangeListener.onPageSelected(position);
 		for (int i = 0; i < adapter.getCount(); i++) {
 			getChildAt(i).setBackgroundColor(Color.GRAY);
 		}
 		getChildAt(position).setBackgroundColor(Color.TRANSPARENT);
+		invalidate();
 	}
 
 	@Override
@@ -167,7 +171,7 @@ public class TabIndicator extends ViewGroup implements OnPageChangeListener {
 		final int count = adapter.getCount();
 
 		int x = 0;
-		
+
 		for (int i = 0; i < count; i++) {
 			View v = getChildAt(i);
 
@@ -179,9 +183,13 @@ public class TabIndicator extends ViewGroup implements OnPageChangeListener {
 						+ v.getMeasuredWidth(),
 						this.getPaddingTop() + v.getMeasuredHeight());
 			}
-			
+
 			x += v.getMeasuredWidth();
 		}
+	}
+
+	public void setOnPageChangeListener(OnPageChangeListener listener) {
+		onPageChangeListener = listener;
 	}
 
 	public interface TabAdapter {
@@ -216,7 +224,7 @@ public class TabIndicator extends ViewGroup implements OnPageChangeListener {
 			this.tabName = tabName;
 			this.className = className;
 		}
-		
+
 		public TabItem(String tabName, String className, Bundle args) {
 			this.tabName = tabName;
 			this.className = className;
