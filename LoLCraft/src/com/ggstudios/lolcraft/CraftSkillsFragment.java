@@ -2,17 +2,10 @@ package com.ggstudios.lolcraft;
 
 import java.io.IOException;
 import java.text.DecimalFormat;
-import java.util.ArrayList;
-import java.util.List;
-
-import org.xml.sax.SAXNotRecognizedException;
-import org.xml.sax.SAXNotSupportedException;
-import org.xml.sax.XMLReader;
 
 import android.content.Context;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
-import android.text.Editable;
 import android.text.Html;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -36,7 +29,6 @@ public class CraftSkillsFragment extends SherlockFragment {
 	private static final String TAG = "CraftSkillsFragment";
 
 	public static final String EXTRA_CHAMPION_ID = "champId";
-
 
 	private static final DecimalFormat statFormat = new DecimalFormat("###");
 	private Build build;
@@ -76,6 +68,9 @@ public class CraftSkillsFragment extends SherlockFragment {
 
 							@Override
 							public void onRuneAdded(Build build, BuildRune rune) {}
+
+							@Override
+							public void onRuneRemoved(Build build, BuildRune rune) {}
 							
 							@Override
 							public void onBuildStatsChanged() {

@@ -15,9 +15,9 @@
             android:id="@+id/splash"
             android:layout_width="match_parent"
             android:layout_height="160dp"
-            android:src="@drawable/splash_placeholder"
             android:adjustViewBounds="true"
-            android:scaleType="centerCrop" />
+            android:scaleType="centerCrop"
+            android:src="@drawable/splash_placeholder" />
     </com.ggstudios.views.LockableScrollView>
 
     <com.ggstudios.views.TabIndicator
@@ -34,17 +34,6 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_below="@+id/tab_indicator" />
-
-    <ImageView
-        android:id="@+id/portrait"
-        android:layout_width="100dp"
-        android:layout_height="110dp"
-        android:layout_alignParentLeft="true"
-        android:layout_alignParentTop="true"
-        android:layout_marginLeft="10dp"
-        android:layout_marginTop="?android:attr/actionBarSize"
-        android:paddingTop="10dp"
-        android:src="@drawable/champion_placeholder" />
 
     <TextView
         android:id="@+id/name"
@@ -65,5 +54,29 @@
         android:layout_alignLeft="@+id/name"
         android:layout_below="@+id/name"
         android:textAppearance="?android:attr/textAppearanceSmall" />
+    
+    <LinearLayout 
+        android:id="@+id/champInfoPanel"
+        android:layout_marginTop="10dp"
+        android:layout_width="match_parent"
+        android:layout_height="200dp"
+        android:orientation="vertical"
+        android:layout_alignTop="@+id/portrait"
+        android:layout_alignLeft="@+id/portrait"
+        android:background="@color/white"
+        android:visibility="invisible">
+        
+    </LinearLayout>
+
+    <ImageView
+        android:id="@+id/portrait"
+        android:layout_width="100dp"
+        android:layout_height="110dp"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentTop="true"
+        android:layout_marginLeft="10dp"
+        android:layout_marginTop="?attr/actionBarSize"
+        android:paddingTop="10dp"
+        android:src="@drawable/champion_placeholder" />
 
 </RelativeLayout>

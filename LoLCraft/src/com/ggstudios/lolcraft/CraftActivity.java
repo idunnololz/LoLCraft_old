@@ -15,12 +15,17 @@ import android.support.v4.app.FragmentPagerAdapter;
 import android.support.v4.app.NavUtils;
 import android.support.v4.view.ViewPager;
 import android.support.v4.view.ViewPager.OnPageChangeListener;
+import android.view.View;
 import android.view.View.MeasureSpec;
+import android.view.View.OnClickListener;
+import android.view.animation.Animation;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import com.actionbarsherlock.app.SherlockFragmentActivity;
 import com.actionbarsherlock.view.MenuItem;
+import com.ggstudios.animation.ResizeAnimation;
 import com.ggstudios.lolcraft.ItemPickerDialogFragment.ItemPickerDialogListener;
 import com.ggstudios.lolcraft.RunePickerDialogFragment.RunePickerDialogListener;
 import com.ggstudios.lolcraft.SplashFetcher.OnDrawableRetrievedListener;
@@ -36,6 +41,7 @@ public class CraftActivity extends SherlockFragmentActivity implements ItemPicke
 	public static final String EXTRA_CHAMPION_ID = "champId";
 
 	private static final int PARALLAX_WIDTH_DP = 30;
+	private static final int RESIZE_DURATION = 200;
 
 	private ChampionInfo info;
 
@@ -46,6 +52,8 @@ public class CraftActivity extends SherlockFragmentActivity implements ItemPicke
 	private ViewPager pager;
 	private TabIndicator tabIndicator;
 	private LockableScrollView splashScroll;
+	
+	private LinearLayout champInfoPanel;
 
 	private Build build;
 
@@ -69,7 +77,8 @@ public class CraftActivity extends SherlockFragmentActivity implements ItemPicke
 		pager = (ViewPager) findViewById(R.id.pager);
 		tabIndicator = (TabIndicator) findViewById(R.id.tab_indicator);
 		splashScroll = (LockableScrollView) findViewById(R.id.splashScrollView);
-
+		champInfoPanel = (LinearLayout) findViewById(R.id.champInfoPanel);
+		
 		splashScroll.setScrollingEnabled(false);
 
 		Bundle args = new Bundle();
@@ -109,6 +118,22 @@ public class CraftActivity extends SherlockFragmentActivity implements ItemPicke
 
 			}
 
+		});
+		
+		portrait.setOnClickListener(new OnClickListener() {
+
+			@Override
+			public void onClick(View v) {
+				Animation ani = new ResizeAnimation(champInfoPanel, 0, champInfoPanel.getWidth(),
+						0, champInfoPanel.getHeight());
+				ani.setDuration(RESIZE_DURATION);
+				champInfoPanel.startAnimation(ani);
+				champInfoPanel.getLayoutParams().width = 0;
+				champInfoPanel.requestLayout();
+				champInfoPanel.setVisibility(View.VISIBLE);
+				
+			}
+			
 		});
 
 		if (info.icon != null) {
@@ -224,6 +249,7 @@ public class CraftActivity extends SherlockFragmentActivity implements ItemPicke
 
 	@Override
 	public void onRunePicked(RuneInfo rune) {
-		build.addRune(rune);
+		if (build.canAdd(rune)) 
+			build.addRune(rune);
 	}
 }

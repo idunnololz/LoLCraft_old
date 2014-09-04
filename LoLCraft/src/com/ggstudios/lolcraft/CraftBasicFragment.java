@@ -3,17 +3,14 @@ package com.ggstudios.lolcraft;
 import java.text.DecimalFormat;
 
 import android.annotation.SuppressLint;
-import android.content.ClipData.Item;
 import android.graphics.Color;
 import android.graphics.drawable.TransitionDrawable;
 import android.os.Bundle;
 import android.support.v4.app.FragmentManager;
 import android.text.Spannable;
-import android.text.SpannableString;
 import android.text.SpannableStringBuilder;
 import android.text.style.ForegroundColorSpan;
 import android.text.style.RelativeSizeSpan;
-import android.text.style.ScaleXSpan;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
@@ -30,7 +27,7 @@ import android.widget.Button;
 import android.widget.HorizontalScrollView;
 import android.widget.ImageButton;
 import android.widget.ImageView;
-import android.widget.ScrollView;
+import android.widget.LinearLayout;
 import android.widget.SeekBar;
 import android.widget.SeekBar.OnSeekBarChangeListener;
 import android.widget.Spinner;
@@ -78,6 +75,8 @@ public class CraftBasicFragment extends SherlockFragment implements BuildObserve
 	private HorizontalScrollView buildScrollView;
 	private SeekBar seekBar;
 	private ImageButton btnTrash;
+	private LinearLayout runeContainer;
+	private HorizontalScrollView runeScrollView;
 
 	private int scrollSpeed;
 
@@ -92,30 +91,37 @@ public class CraftBasicFragment extends SherlockFragment implements BuildObserve
 	private int seekBarPadding;
 
 	private static final DecimalFormat statFormat = new DecimalFormat("###.##");
+	private static final DecimalFormat apFormat = new DecimalFormat("###");
 
 	private void setStat(TextView tv, double base, double gain, int level, double itemBonus) {
 		double levelBonus = gain * level;
 		double total = base + levelBonus + itemBonus;
 
-		printStat(tv, total, itemBonus, levelBonus, true);
+		printStat(tv, total, itemBonus, levelBonus, true, statFormat);
 	}
 
 	private void setStatAs(TextView tv, double base, double gain, int level, double itemBonus) {
 		double levelBonus = gain * level;
 		double total = base * (1 + levelBonus + itemBonus);
 
-		printStat(tv, total, itemBonus, levelBonus, true);
+		printStat(tv, total, itemBonus, levelBonus, true, statFormat);
 	}
 
 	private void setLevelessStat(TextView tv, double base, double gain, int level, double itemBonus) {
 		double total = base + itemBonus;
 
-		printStat(tv, total, itemBonus, 0, false);
+		printStat(tv, total, itemBonus, 0, false, statFormat);
+	}
+	
+	private void setLevelessStat(TextView tv, double base, double gain, int level, double itemBonus, DecimalFormat df) {
+		double total = base + itemBonus;
+
+		printStat(tv, total, itemBonus, 0, false, df);
 	}
 
-	private void printStat(TextView tv, double total, double itemBonus, double levelBonus, boolean printLevelStat) {
+	private void printStat(TextView tv, double total, double itemBonus, double levelBonus, boolean printLevelStat, DecimalFormat df) {
 		SpannableStringBuilder span = new SpannableStringBuilder();
-		span.append("" + statFormat.format(total));
+		span.append("" + df.format(total));
 		int start = span.length();
 		int s1 = span.length();
 		span.append("(+" + statFormat.format(itemBonus) + ")");
@@ -166,9 +172,12 @@ public class CraftBasicFragment extends SherlockFragment implements BuildObserve
 		buildScrollView = (HorizontalScrollView) rootView.findViewById(R.id.scrollView);
 		seekBar = (SeekBar) rootView.findViewById(R.id.seekBar);
 		btnTrash = (ImageButton) rootView.findViewById(R.id.btnTrash);
+		runeContainer = (LinearLayout) rootView.findViewById(R.id.runes);
+		runeScrollView = (HorizontalScrollView) rootView.findViewById(R.id.runeScrollView);
 
 		updateStats();
 		updateBuild();
+		updateRunes();
 
 		buildContainer.setOnEdgeDragListener(new OnEdgeDragListener() {
 
@@ -408,6 +417,17 @@ public class CraftBasicFragment extends SherlockFragment implements BuildObserve
 
 		return rootView;
 	}
+
+	@Override 
+	public void onDestroyView() {
+		super.onDestroyView();
+		
+		final int runeCount = build.getRuneCount();
+		
+		for (int i = 0; i < runeCount; i++) {
+			build.getRune(i).tag = null;
+		}
+	}
 	
 	private void showView(View v) {
 		Animation ani = new AlphaAnimation(0f, 1f);
@@ -469,6 +489,12 @@ public class CraftBasicFragment extends SherlockFragment implements BuildObserve
 	
 	@Override
 	public void onRuneAdded(Build build, BuildRune rune) {
+		updateRunes(rune);
+	}
+	
+	@Override
+	public void onRuneRemoved(Build build, BuildRune rune) {
+		((BuildRuneView) rune.tag).removeSelf();
 	}
 
 	@Override
@@ -488,7 +514,7 @@ public class CraftBasicFragment extends SherlockFragment implements BuildObserve
 
 		setStat(txtAd, 			info.ad, 		info.adG, 		level, build.getBonusAd());
 		setStatAs(txtAs, 		info.as, 		info.asG, 		level, build.getBonusAs());
-		setLevelessStat(txtAp, 	0, 				0,		 		level, build.getBonusAp());
+		setLevelessStat(txtAp, 	0, 				0,		 		level, build.getBonusAp(),		apFormat);
 		setStat(txtAr, 			info.ar, 		info.arG, 		level, build.getBonusAr());
 		setStat(txtMr, 			info.mr, 		info.mrG, 		level, build.getBonusMr());
 	}
@@ -616,6 +642,42 @@ public class CraftBasicFragment extends SherlockFragment implements BuildObserve
 		}
 		
 		refreshAllItemViews();
+	}
+	
+	private void updateRunes() {
+		updateRunes(null);
+	}
+	
+	private void updateRunes(BuildRune rune) {
+		if (rune == null) {
+			runeContainer.removeAllViews();
+			
+			final int runeCount = build.getRuneCount();
+			
+			for (int i = 0; i < runeCount; i++) {
+				rune = build.getRune(i);
+				BuildRuneView v = (BuildRuneView) inflater.inflate(R.layout.item_rune_in_build, runeContainer, false);
+				v.bindBuildRune(rune);
+				
+				runeContainer.addView(v);
+				rune.tag = v;
+			}
+		} else {
+			BuildRuneView v = (BuildRuneView) inflater.inflate(R.layout.item_rune_in_build, runeContainer, false);
+			v.bindBuildRune(rune);
+			
+			runeScrollView.post(new Runnable() {
+
+				@Override
+				public void run() {
+					runeScrollView.smoothScrollTo(runeContainer.getWidth(), 0);
+				}
+
+			});
+			
+			runeContainer.addView(v);
+			rune.tag = v;
+		}
 	}
 	
 	private class ItemViewHolder {

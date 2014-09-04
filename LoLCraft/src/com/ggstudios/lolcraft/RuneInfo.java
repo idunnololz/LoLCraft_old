@@ -10,10 +10,11 @@ public class RuneInfo {
 	
 	String name;
 	String shortName;
+	String veryShortName;
 	String desc;
 	String shortDesc;
 	String iconAssetName;
-	String runeType;
+	int runeType;
 	Drawable icon;
 	
 	JSONObject stats;

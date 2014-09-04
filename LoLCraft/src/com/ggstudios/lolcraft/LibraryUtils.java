@@ -7,6 +7,7 @@ import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
@@ -364,7 +365,13 @@ public class LibraryUtils {
 		// Close the InputStream and BufferedReader
 		is.close();
 		br.close();
-
+		
+		HashMap<String, Integer> typeToId = new HashMap<String, Integer>();
+		typeToId.put("red", Build.RUNE_TYPE_RED);
+		typeToId.put("blue", Build.RUNE_TYPE_BLUE);
+		typeToId.put("yellow", Build.RUNE_TYPE_YELLOW);
+		typeToId.put("black", Build.RUNE_TYPE_BLACK);
+		
 		JSONObject o = new JSONObject(builder.toString());
 		JSONObject runeData = o.getJSONObject("data");
 
@@ -383,11 +390,12 @@ public class LibraryUtils {
 
 				info.name = value.getString("name");
 				info.shortName = shortenRuneName(info.name);
+				info.veryShortName = shortenRuneNameMore(info.shortName);
 				info.desc = value.getString("description");
 				info.shortDesc = shortenRuneDesc(info.desc);
 				info.stats = value.getJSONObject("stats");
 				info.iconAssetName = value.getJSONObject("image").getString("full");
-				info.runeType = rune.getString("type");
+				info.runeType = typeToId.get(rune.getString("type"));
 
 				info.rawJson = value;
 
@@ -406,11 +414,6 @@ public class LibraryUtils {
 
 		});
 
-		//		AssetManager assets = con.getAssets();
-		//		for (RuneInfo i : runes) {
-		//			i.icon = Drawable.createFromStream(assets.open("rune/" + i.iconAssetName), null);
-		//		}
-
 		return runes;
 	}
 
@@ -419,6 +422,18 @@ public class LibraryUtils {
 		if (n.startsWith("Quintessence")) {
 			n = "Quint" + n.substring(12);
 		}
+		return n;
+	}
+	
+	private static int nthOccurrence(String str, char c, int n) {
+	    int pos = str.indexOf(c, 0);
+	    while (n-- > 0 && pos != -1)
+	        pos = str.indexOf(c, pos+1);
+	    return pos;
+	}
+	
+	private static String shortenRuneNameMore(String name) {
+		String n = name.substring(nthOccurrence(name, ' ', 1) + 1);
 		return n;
 	}
 

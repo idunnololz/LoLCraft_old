@@ -31,6 +31,11 @@ public class Build {
 	private int champLevel;
 	
 	private static final int FLAG_SCALING = 0x80000000;
+	
+	public static final int RUNE_TYPE_RED = 0;
+	public static final int RUNE_TYPE_BLUE = 1;
+	public static final int RUNE_TYPE_YELLOW = 2;
+	public static final int RUNE_TYPE_BLACK = 3;
 
 	private static final int STAT_NULL = 0;
 	private static final int STAT_HP = 1;
@@ -74,6 +79,12 @@ public class Build {
 	private int enabledBuildEnd = 0;
 	
 	private int currentGroupCounter = 0;
+	
+	private static final int[] RUNE_COUNT_MAX = new int[] {
+		9, 9, 9, 3
+	};
+	
+	private int[] runeCount = new int[4];
 
 	static {
 		statKeyToIndex = new HashMap<String, Integer>();
@@ -159,6 +170,15 @@ public class Build {
 	};
 
 	private double[] stats = new double[MAX_STATS];
+	
+	private OnRuneCountChangedListener onRuneCountChangedListener = new OnRuneCountChangedListener() {
+
+		@Override
+		public void onRuneCountChanged(BuildRune rune, int oldCount, int newCount) {
+			Build.this.onRuneCountChanged(rune, oldCount, newCount);
+		}
+		
+	};
 
 	public Build() {
 		itemBuild = new ArrayList<BuildItem>();
@@ -269,7 +289,7 @@ public class Build {
 		int active = 0;
 		
 		for (BuildRune r : runeBuild) {
-			appendStat(r.info);
+			appendStat(r);
 		}
 		
 		for (BuildItem item : itemBuild) {
@@ -305,16 +325,17 @@ public class Build {
 		}
 	}
 	
-	private void appendStat(RuneInfo rune) {
-		Iterator<?> iter = rune.stats.keys();
+	private void appendStat(BuildRune rune) {
+		RuneInfo info = rune.info;
+		Iterator<?> iter = info.stats.keys();
 		while (iter.hasNext()) {
 			String key = (String) iter.next();
 			try {
 				int f = statKeyToIndex.get(key);
 				if ((f & FLAG_SCALING) != 0) {
-					stats[f & ~FLAG_SCALING] += rune.stats.getDouble(key) * (champLevel + 1);
+					stats[f & ~FLAG_SCALING] += info.stats.getDouble(key) * (champLevel + 1) * rune.count;
 				} else {
-					stats[f] += rune.stats.getDouble(key);
+					stats[f] += info.stats.getDouble(key) * rune.count;
 				}
 
 			} catch (JSONException e) {
@@ -337,13 +358,61 @@ public class Build {
 	}
 	
 	public BuildRune addRune(RuneInfo rune) {
-		BuildRune r = new BuildRune(rune);
-		runeBuild.add(r);
+		// Check if this rune is already in the build...
+		boolean found = false;
+		BuildRune r = null;
+		for (BuildRune br : runeBuild) {
+			if (br.id == rune.id) {
+				r = br;
+				br.addRune();
+				
+				found = true;
+				break;
+			}
+		}
+
+		if (!found) {
+			r = new BuildRune(rune, rune.id);
+			runeBuild.add(r);
+			r.listener = onRuneCountChangedListener;
+			runeCount[rune.runeType]++;
+		}
+		
 		
 		recalculateStats();
-		notifyRuneAdded(r);
+		if (!found) {
+			notifyRuneAdded(r);
+		}
 		
 		return r;
+	}
+	
+	public boolean canAdd(RuneInfo rune) {
+		return runeCount[rune.runeType] + 1 <= RUNE_COUNT_MAX[rune.runeType];
+	}
+	
+	public void removeRune(BuildRune rune) {
+		rune.listener = null;
+		runeBuild.remove(rune);
+		
+		recalculateStats();
+		notifyRuneRemoved(rune);
+	}
+	
+	private void onRuneCountChanged(BuildRune rune, int oldCount, int newCount) {
+		int runeType = rune.info.runeType;
+		if (runeCount[runeType] + (newCount - oldCount) > RUNE_COUNT_MAX[runeType]) {
+			rune.count = oldCount;
+			return;
+		}
+		
+		runeCount[runeType] += (newCount - oldCount);
+		
+		if (rune.getCount() == 0) {
+			removeRune(rune);
+		} else {
+			recalculateStats();
+		}
 	}
 	
 	public void setChampion(ChampionInfo champ) {
@@ -383,6 +452,12 @@ public class Build {
 			o.onRuneAdded(this, rune);
 		}
 	}
+	
+	private void notifyRuneRemoved(BuildRune rune) {
+		for (BuildObserver o : observers) {
+			o.onRuneRemoved(this, rune);
+		}
+	}
 
 	private void notifyBuildStatsChanged() {
 		for (BuildObserver o : observers) {
@@ -406,6 +481,14 @@ public class Build {
 
 	public int getBuildSize() {
 		return itemBuild.size();
+	}
+	
+	public BuildRune getRune(int index) {
+		return runeBuild.get(index);
+	}
+	
+	public int getRuneCount() {
+		return runeBuild.size();
 	}
 
 	public ItemInfo getLastItem() {
@@ -454,6 +537,10 @@ public class Build {
 
 	public double getBonusAp() {
 		return stats[STAT_AP];
+	}
+	
+	public double[] getRawStats() {
+		return stats;
 	}
 	
 	public double getStat(String key) {
@@ -506,8 +593,8 @@ public class Build {
 		public void onBuildChanged(Build build);
 		public void onItemAdded(Build build, BuildItem item);
 		public void onRuneAdded(Build build, BuildRune rune);
+		public void onRuneRemoved(Build build, BuildRune rune);
 		public void onBuildStatsChanged();
-		
 	}
 	
 	public static class BuildItem {
@@ -531,11 +618,52 @@ public class Build {
 	
 	public static class BuildRune {
 		RuneInfo info;
-		int count;
+		Object tag;
+		int id;
 		
-		private BuildRune(RuneInfo info) {
+		private int count;
+		private OnRuneCountChangedListener listener;
+		private OnRuneCountChangedListener onRuneCountChangedListener;
+		
+		private BuildRune(RuneInfo info, int id) {
 			this.info = info;
 			count = 1;
+			this.id = id;
 		}
+		
+		public void addRune() {
+			count++;
+			
+			int c = count;
+			
+			listener.onRuneCountChanged(this, count - 1, count);
+			if (c == count && onRuneCountChangedListener != null) {
+				onRuneCountChangedListener.onRuneCountChanged(this, count - 1, count);
+			}
+		}
+		
+		public void removeRune() {
+			if (count == 0) return;
+			count--;
+
+			int c = count;
+			
+			listener.onRuneCountChanged(this, count + 1, count);
+			if (c == count && onRuneCountChangedListener != null) {
+				onRuneCountChangedListener.onRuneCountChanged(this, count + 1, count);
+			}
+		}
+		
+		public int getCount() {
+			return count;
+		}
+		
+		public void setOnRuneCountChangedListener(OnRuneCountChangedListener listener) {
+			onRuneCountChangedListener = listener;
+		}
+	}
+	
+	public static interface OnRuneCountChangedListener {
+		public void onRuneCountChanged(BuildRune rune, int oldCount, int newCount);
 	}
 }

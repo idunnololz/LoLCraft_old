@@ -36,7 +36,8 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="3"
                     android:text="@string/stat_hp"
-                    android:textAppearance="?android:attr/textAppearanceSmall" />
+                    android:textAppearance="?android:attr/textAppearanceSmall"
+                    style="@style/StatTitleStyle"/>
 
                 <TextView
                     android:id="@+id/lblHpRegen"
@@ -44,14 +45,16 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="3"
                     android:text="@string/stat_hp_regen"
-                    android:textAppearance="?android:attr/textAppearanceSmall" />
+                    android:textAppearance="?android:attr/textAppearanceSmall"
+                    style="@style/StatTitleStyle"/>
 
                 <TextView
                     android:id="@+id/lblMs"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="2"
-                    android:text="@string/stat_ms" />
+                    android:text="@string/stat_ms"
+                    style="@style/StatTitleStyle"/>
             </TableRow>
 
             <TableRow
@@ -67,7 +70,8 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="3"
                     android:text="100"
-                    android:textAppearance="?android:attr/textAppearanceMedium" />
+                    android:textAppearance="?android:attr/textAppearanceMedium"
+                    style="@style/StatValueStyle"/>
 
                 <TextView
                     android:id="@+id/txtHpRegen"
@@ -75,7 +79,8 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="3"
                     android:text="100"
-                    android:textAppearance="?android:attr/textAppearanceMedium" />
+                    android:textAppearance="?android:attr/textAppearanceMedium"
+                    style="@style/StatValueStyle"/>
 
                 <TextView
                     android:id="@+id/txtMs"
@@ -83,7 +88,8 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="2"
                     android:text="100"
-                    android:textAppearance="?android:attr/textAppearanceMedium" />
+                    android:textAppearance="?android:attr/textAppearanceMedium"
+                    style="@style/StatValueStyle"/>
             </TableRow>
 
             <TableRow
@@ -97,7 +103,8 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="3"
                     android:text="@string/stat_mp"
-                    android:textAppearance="?android:attr/textAppearanceSmall" />
+                    android:textAppearance="?android:attr/textAppearanceSmall"
+                    style="@style/StatTitleStyle"/>
 
                 <TextView
                     android:id="@+id/lblMpRegen"
@@ -105,7 +112,8 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="3"
                     android:text="@string/stat_mp_regen"
-                    android:textAppearance="?android:attr/textAppearanceSmall" />
+                    android:textAppearance="?android:attr/textAppearanceSmall"
+                    style="@style/StatTitleStyle"/>
 
                 <TextView
                     android:id="@+id/lblRange"
@@ -113,7 +121,8 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="2"
                     android:text="@string/stat_range"
-                    android:textAppearance="?android:attr/textAppearanceSmall" />
+                    android:textAppearance="?android:attr/textAppearanceSmall"
+                    style="@style/StatTitleStyle"/>
             </TableRow>
 
             <TableRow
@@ -129,7 +138,8 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="3"
                     android:text="100"
-                    android:textAppearance="?android:attr/textAppearanceMedium" />
+                    android:textAppearance="?android:attr/textAppearanceMedium"
+                    style="@style/StatValueStyle"/>
 
                 <TextView
                     android:id="@+id/txtMpRegen"
@@ -137,7 +147,8 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="3"
                     android:text="100"
-                    android:textAppearance="?android:attr/textAppearanceMedium" />
+                    android:textAppearance="?android:attr/textAppearanceMedium"
+                    style="@style/StatValueStyle"/>
 
                 <TextView
                     android:id="@+id/txtRange"
@@ -145,7 +156,8 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="2"
                     android:text="100"
-                    android:textAppearance="?android:attr/textAppearanceMedium" />
+                    android:textAppearance="?android:attr/textAppearanceMedium"
+                    style="@style/StatValueStyle"/>
             </TableRow>
 
             <TableRow
@@ -159,7 +171,8 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="3"
                     android:text="@string/stat_ad"
-                    android:textAppearance="?android:attr/textAppearanceSmall" />
+                    android:textAppearance="?android:attr/textAppearanceSmall"
+                    style="@style/StatTitleStyle"/>
 
                 <TextView
                     android:id="@+id/lblAs"
@@ -167,7 +180,8 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="3"
                     android:text="@string/stat_as"
-                    android:textAppearance="?android:attr/textAppearanceSmall" />
+                    android:textAppearance="?android:attr/textAppearanceSmall"
+                    style="@style/StatTitleStyle"/>
 
                 <TextView
                     android:id="@+id/lblAp"
@@ -175,7 +189,8 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="2"
                     android:text="@string/stat_ap"
-                    android:textAppearance="?android:attr/textAppearanceSmall" />
+                    android:textAppearance="?android:attr/textAppearanceSmall"
+                    style="@style/StatTitleStyle"/>
             </TableRow>
 
             <TableRow
@@ -191,7 +206,8 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="3"
                     android:text="100"
-                    android:textAppearance="?android:attr/textAppearanceMedium" />
+                    android:textAppearance="?android:attr/textAppearanceMedium"
+                    style="@style/StatValueStyle"/>
 
                 <TextView
                     android:id="@+id/txtAs"
@@ -199,7 +215,8 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="3"
                     android:text="100"
-                    android:textAppearance="?android:attr/textAppearanceMedium" />
+                    android:textAppearance="?android:attr/textAppearanceMedium"
+                    style="@style/StatValueStyle"/>
 
                 <TextView
                     android:id="@+id/txtAp"
@@ -207,7 +224,8 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="2"
                     android:text="100"
-                    android:textAppearance="?android:attr/textAppearanceMedium" />
+                    android:textAppearance="?android:attr/textAppearanceMedium"
+                    style="@style/StatValueStyle"/>
             </TableRow>
 
             <TableRow
@@ -221,7 +239,8 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="3"
                     android:text="@string/stat_ar"
-                    android:textAppearance="?android:attr/textAppearanceSmall" />
+                    android:textAppearance="?android:attr/textAppearanceSmall"
+                    style="@style/StatTitleStyle"/>
 
                 <TextView
                     android:id="@+id/lblMr"
@@ -229,7 +248,8 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="3"
                     android:text="@string/stat_mr"
-                    android:textAppearance="?android:attr/textAppearanceSmall" />
+                    android:textAppearance="?android:attr/textAppearanceSmall"
+                    style="@style/StatTitleStyle"/>
 
                 <TextView
                     android:id="@+id/lblLevel"
@@ -237,7 +257,8 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="2"
                     android:text="@string/stat_level"
-                    android:textAppearance="?android:attr/textAppearanceSmall" />
+                    android:textAppearance="?android:attr/textAppearanceSmall"
+                    style="@style/StatTitleStyle"/>
             </TableRow>
 
             <TableRow
@@ -253,7 +274,8 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="3"
                     android:text="100"
-                    android:textAppearance="?android:attr/textAppearanceMedium" />
+                    android:textAppearance="?android:attr/textAppearanceMedium"
+                    style="@style/StatValueStyle"/>
 
                 <TextView
                     android:id="@+id/txtMr"
@@ -261,7 +283,8 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="3"
                     android:text="100"
-                    android:textAppearance="?android:attr/textAppearanceMedium" />
+                    android:textAppearance="?android:attr/textAppearanceMedium"
+                    style="@style/StatValueStyle"/>
 
                 <LinearLayout
                     android:layout_width="0dp"
@@ -353,7 +376,7 @@
         </LinearLayout>
 
         <LinearLayout
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_below="@+id/item_build"
             android:orientation="vertical" >
@@ -369,22 +392,15 @@
                 android:id="@+id/runeScrollView"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:background="@color/lightgrey"
                 android:scrollbars="horizontal" >
 
-                <RelativeLayout
+                <LinearLayout
+                    android:id="@+id/runes"
                     android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical" >
-
-                    <LinearLayout
-                        android:id="@+id/runes"
-                        android:layout_width="wrap_content"
-                        android:layout_height="90dp"
-                        android:orientation="horizontal"
-                        android:paddingLeft="10dp"
-                        android:paddingRight="10dp" >
-                    </LinearLayout>
-                </RelativeLayout>
+                    android:layout_height="90dp"
+                    android:orientation="horizontal">
+                </LinearLayout>
             </com.ggstudios.views.InterceptingHorizontalScrollView>
 
             <Button
