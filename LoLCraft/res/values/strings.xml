@@ -27,5 +27,12 @@
     <string name="runes">Runes</string>
     
     <string name="add_runes">Add Runes</string>
+    
+    <string name="primary_role">PRIMARY ROLE</string>
+    <string name="secondary_role">SECONDARY ROLE</string>
+    <string name="overall_stat_atk">ATK</string>
+    <string name="overall_stat_def">DEF</string>
+    <string name="overall_stat_ap">AP</string>
+    <string name="overall_stat_diff">DIFF</string>
 
 </resources>

@@ -20,6 +20,15 @@ public class ChampionInfo {
 	String name;
 	String title;
 	String key;
+	String lore;
+	
+	String primRole;
+	String secRole;
+	
+	int attack;
+	int defense;
+	int magic;
+	int difficulty;
 
 	double hp;
 	double hpG;
@@ -40,22 +49,41 @@ public class ChampionInfo {
 	double mr;
 	double mrG;
 
-	boolean skillsLoaded = false;
+	boolean fullyLoaded = false;
 
+	public void onFullyLoaded(final OnFullyLoadedListener listener) {
+		if (fullyLoaded) {
+			listener.onFullyLoaded();
+		} else {
+			new Thread() {
+				@Override
+				public void run() {
+					synchronized(skillLock) {
+						while (!fullyLoaded) {
+							try {
+								skillLock.wait();
+							} catch (InterruptedException e) {}
+						}
+					}
+					listener.onFullyLoaded();
+				}
+			}.start();
+		}
+	}
+	
 	public void getSkills(final OnSkillsLoadedListener listener) {
 		if (skills == null) {
 			new Thread() {
 				@Override
 				public void run() {
 					synchronized(skillLock) {
-						if (skills == null) {
+						while (skills == null) {
 							try {
 								skillLock.wait();
 							} catch (InterruptedException e) {}
-
-							listener.onSkillsLoaded(skills);
 						}
 					}
+					listener.onSkillsLoaded(skills);
 				}
 			}.start();
 		} else {
@@ -67,6 +95,13 @@ public class ChampionInfo {
 	public void setSkills(Skill[] skills) {
 		synchronized(skillLock) {
 			this.skills = skills;
+			skillLock.notifyAll();
+		}
+	}
+	
+	public void fullyLoaded() {
+		synchronized(skillLock) {
+			fullyLoaded = true;
 			skillLock.notifyAll();
 		}
 	}
@@ -275,5 +310,9 @@ public class ChampionInfo {
 		matcher.appendTail(sb);
 
 		return sb.toString();
+	}
+	
+	public static interface OnFullyLoadedListener {
+		public void onFullyLoaded();
 	}
 }

@@ -101,21 +101,30 @@ public class LibraryUtils {
 				s.rawEffectBurn = o.getJSONArray("effectBurn");
 
 				if (o.has("rangeBurn")) {
-					builder.append("Range: ");
-					builder.append(o.getString("rangeBurn"));
-					builder.append(' ');
+					String range = o.getString("rangeBurn");
+					if (!range.equals("self")) {
+						builder.append("Range: ");
+						builder.append(range);
+						builder.append(' ');
+					}
 				}
 
 				if (o.has("costBurn")) {
-					builder.append("Cost: ");
-					builder.append(o.getString("costBurn"));
-					builder.append(' ');
+					String cost = o.getString("costBurn");
+					if (!cost.equals("0")) {
+						builder.append("Cost: ");
+						builder.append(cost);
+						builder.append(' ');
+					}
 				}
 
 				if (o.has("cooldownBurn")) {
-					builder.append("Cooldown: ");
-					builder.append(o.getString("cooldownBurn"));
-					builder.append(' ');
+					String cd = o.getString("cooldownBurn");
+					if (!cd.equals("0")) {
+						builder.append("Cooldown: ");
+						builder.append(cd);
+						builder.append(' ');
+					}
 				}
 
 				s.details = builder.toString();
@@ -133,7 +142,23 @@ public class LibraryUtils {
 				}
 			}
 
+			info.lore = champData.getString("lore");
+			JSONArray roles = champData.getJSONArray("tags");
+			if (roles.length() == 1) {
+				info.primRole = roles.getString(0);
+			} else {
+				info.primRole = roles.getString(0);
+				info.secRole = roles.getString(1);
+			}
+
+			JSONObject stats = champData.getJSONObject("info");
+			info.attack = stats.getInt("attack");
+			info.defense = stats.getInt("defense");
+			info.magic = stats.getInt("magic");
+			info.difficulty = stats.getInt("difficulty");
+
 			info.setSkills(skills);
+			info.fullyLoaded();
 
 		} catch (IOException e) {
 			DebugLog.e(TAG, e);
@@ -365,13 +390,13 @@ public class LibraryUtils {
 		// Close the InputStream and BufferedReader
 		is.close();
 		br.close();
-		
+
 		HashMap<String, Integer> typeToId = new HashMap<String, Integer>();
 		typeToId.put("red", Build.RUNE_TYPE_RED);
 		typeToId.put("blue", Build.RUNE_TYPE_BLUE);
 		typeToId.put("yellow", Build.RUNE_TYPE_YELLOW);
 		typeToId.put("black", Build.RUNE_TYPE_BLACK);
-		
+
 		JSONObject o = new JSONObject(builder.toString());
 		JSONObject runeData = o.getJSONObject("data");
 
@@ -424,14 +449,14 @@ public class LibraryUtils {
 		}
 		return n;
 	}
-	
+
 	private static int nthOccurrence(String str, char c, int n) {
-	    int pos = str.indexOf(c, 0);
-	    while (n-- > 0 && pos != -1)
-	        pos = str.indexOf(c, pos+1);
-	    return pos;
+		int pos = str.indexOf(c, 0);
+		while (n-- > 0 && pos != -1)
+			pos = str.indexOf(c, pos+1);
+		return pos;
 	}
-	
+
 	private static String shortenRuneNameMore(String name) {
 		String n = name.substring(nthOccurrence(name, ' ', 1) + 1);
 		return n;

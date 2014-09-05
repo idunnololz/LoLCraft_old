@@ -15,21 +15,31 @@ import android.support.v4.app.FragmentPagerAdapter;
 import android.support.v4.app.NavUtils;
 import android.support.v4.view.ViewPager;
 import android.support.v4.view.ViewPager.OnPageChangeListener;
+import android.text.Html;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.View.MeasureSpec;
 import android.view.View.OnClickListener;
+import android.view.animation.AlphaAnimation;
 import android.view.animation.Animation;
+import android.view.animation.Animation.AnimationListener;
+import android.widget.Button;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.ProgressBar;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import com.actionbarsherlock.app.SherlockFragmentActivity;
 import com.actionbarsherlock.view.MenuItem;
 import com.ggstudios.animation.ResizeAnimation;
+import com.ggstudios.lolcraft.ChampionInfo.OnFullyLoadedListener;
 import com.ggstudios.lolcraft.ItemPickerDialogFragment.ItemPickerDialogListener;
 import com.ggstudios.lolcraft.RunePickerDialogFragment.RunePickerDialogListener;
 import com.ggstudios.lolcraft.SplashFetcher.OnDrawableRetrievedListener;
 import com.ggstudios.utils.DebugLog;
+import com.ggstudios.utils.FlowTextHelper;
 import com.ggstudios.utils.Utils;
 import com.ggstudios.views.LockableScrollView;
 import com.ggstudios.views.TabIndicator;
@@ -42,6 +52,7 @@ public class CraftActivity extends SherlockFragmentActivity implements ItemPicke
 
 	private static final int PARALLAX_WIDTH_DP = 30;
 	private static final int RESIZE_DURATION = 200;
+	private static final int FADE_IN_DURATION = 100;
 
 	private ChampionInfo info;
 
@@ -53,10 +64,29 @@ public class CraftActivity extends SherlockFragmentActivity implements ItemPicke
 	private TabIndicator tabIndicator;
 	private LockableScrollView splashScroll;
 	
-	private LinearLayout champInfoPanel;
-
+	private View champInfoPanel;
+	private View overlay;
+	private TextView infoPanelName;
+	private TextView infoPanelTitle;
+	private TextView infoPanelLore;
+	private View champInfoContent;
+	private ImageButton btnClosePanel;
+	private TextView txtPrimaryRole;
+	private TextView lblSecondaryRole;
+	private TextView txtSecondaryRole;
+	private ProgressBar pbarAtk;
+	private ProgressBar pbarDef;
+	private ProgressBar pbarAp;
+	private ProgressBar pbarDiff;
+	
 	private Build build;
+	
+	private int infoPanelW;
+	private int infoPanelH;
 
+	private boolean panelOpen = false;
+	private boolean closingPanel = false;
+	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		DebugLog.d(TAG, "onCreate");
@@ -77,7 +107,6 @@ public class CraftActivity extends SherlockFragmentActivity implements ItemPicke
 		pager = (ViewPager) findViewById(R.id.pager);
 		tabIndicator = (TabIndicator) findViewById(R.id.tab_indicator);
 		splashScroll = (LockableScrollView) findViewById(R.id.splashScrollView);
-		champInfoPanel = (LinearLayout) findViewById(R.id.champInfoPanel);
 		
 		splashScroll.setScrollingEnabled(false);
 
@@ -102,10 +131,7 @@ public class CraftActivity extends SherlockFragmentActivity implements ItemPicke
 		tabIndicator.setOnPageChangeListener(new OnPageChangeListener() {
 
 			@Override
-			public void onPageScrollStateChanged(int arg0) {
-				// TODO Auto-generated method stub
-
-			}
+			public void onPageScrollStateChanged(int arg0) {}
 
 			@Override
 			public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
@@ -113,10 +139,7 @@ public class CraftActivity extends SherlockFragmentActivity implements ItemPicke
 			}
 
 			@Override
-			public void onPageSelected(int arg0) {
-				// TODO Auto-generated method stub
-
-			}
+			public void onPageSelected(int arg0) {}
 
 		});
 		
@@ -124,14 +147,7 @@ public class CraftActivity extends SherlockFragmentActivity implements ItemPicke
 
 			@Override
 			public void onClick(View v) {
-				Animation ani = new ResizeAnimation(champInfoPanel, 0, champInfoPanel.getWidth(),
-						0, champInfoPanel.getHeight());
-				ani.setDuration(RESIZE_DURATION);
-				champInfoPanel.startAnimation(ani);
-				champInfoPanel.getLayoutParams().width = 0;
-				champInfoPanel.requestLayout();
-				champInfoPanel.setVisibility(View.VISIBLE);
-				
+				openPanel();
 			}
 			
 		});
@@ -174,6 +190,167 @@ public class CraftActivity extends SherlockFragmentActivity implements ItemPicke
 			}
 
 		}.execute(info);
+	}
+	
+	private void bindPanelViews() {
+		if (champInfoPanel != null) return;
+		
+		champInfoPanel = findViewById(R.id.champInfoPanel);
+		overlay = findViewById(R.id.overlay);
+		infoPanelName = (TextView) findViewById(R.id.infoPanelName);
+		infoPanelTitle = (TextView) findViewById(R.id.infoPanelTitle);
+		infoPanelLore = (TextView) findViewById(R.id.infoPanelLore);
+		champInfoContent = findViewById(R.id.champInfoContent);
+		btnClosePanel = (ImageButton) findViewById(R.id.btnClosePanel);
+		txtPrimaryRole = (TextView) findViewById(R.id.txtPrimaryRole);
+		lblSecondaryRole = (TextView) findViewById(R.id.lblSecondaryRole);
+		txtSecondaryRole = (TextView) findViewById(R.id.txtSecondaryRole);
+		pbarAtk = (ProgressBar) findViewById(R.id.pbar_atk);
+		pbarDef = (ProgressBar) findViewById(R.id.pbar_def);
+		pbarAp = (ProgressBar) findViewById(R.id.pbar_ap);
+		pbarDiff = (ProgressBar) findViewById(R.id.pbar_diff);
+		
+		btnClosePanel.setOnClickListener(new OnClickListener() {
+
+			@Override
+			public void onClick(View v) {
+				closePanel();
+			}
+			
+		});
+		
+		infoPanelW = champInfoPanel.getWidth();
+		infoPanelH = champInfoPanel.getHeight();
+	}
+	
+	private void openPanel() {
+		if (panelOpen) return;
+		
+		bindPanelViews();
+		
+		panelOpen = true;
+		closingPanel = false;
+		Animation ani = new ResizeAnimation(champInfoPanel, 0, infoPanelW,
+				0, infoPanelH);
+		ani.setDuration(RESIZE_DURATION);
+		ani.setAnimationListener(new AnimationListener() {
+
+			@Override
+			public void onAnimationEnd(Animation animation) {
+
+				Animation ani = new AlphaAnimation(0f, 1f);
+				ani.setDuration(FADE_IN_DURATION);
+				ani.setFillAfter(true);
+				champInfoContent.setVisibility(View.INVISIBLE);
+				champInfoContent.startAnimation(ani);
+			}
+
+			@Override
+			public void onAnimationRepeat(Animation animation) {}
+
+			@Override
+			public void onAnimationStart(Animation animation) {}
+			
+		});
+		
+		champInfoPanel.startAnimation(ani);
+		champInfoPanel.getLayoutParams().width = 0;
+		champInfoPanel.requestLayout();
+		champInfoPanel.setVisibility(View.VISIBLE);
+	
+		ani = new AlphaAnimation(0f, 1f);
+		ani.setDuration(RESIZE_DURATION);
+		overlay.setVisibility(View.VISIBLE);
+		overlay.startAnimation(ani);
+		
+		infoPanelName.setText(info.name);
+		infoPanelTitle.setText(info.title);
+		info.onFullyLoaded(new OnFullyLoadedListener() {
+
+			@Override
+			public void onFullyLoaded() {
+				infoPanelLore.post(new Runnable() {
+
+					@Override
+					public void run() {
+						infoPanelLore.setText(Html.fromHtml(info.lore));
+						txtPrimaryRole.setText(info.primRole);
+						
+						if (info.secRole == null) {
+							lblSecondaryRole.setVisibility(View.GONE);
+							txtSecondaryRole.setVisibility(View.GONE);
+						} else {
+							lblSecondaryRole.setVisibility(View.VISIBLE);
+							txtSecondaryRole.setVisibility(View.VISIBLE);
+							txtSecondaryRole.setText(info.secRole);
+						}
+						
+						pbarAtk.setProgress(info.attack);
+						pbarDef.setProgress(info.defense);
+						pbarAp.setProgress(info.magic);
+						pbarDiff.setProgress(info.difficulty);
+					}
+					
+				});
+			}
+			
+		});
+	}
+	
+	private void closePanel() {
+		if (closingPanel) return;
+		
+		panelOpen = false;
+		closingPanel = true;
+		Animation ani = new AlphaAnimation(1f, 0f);
+		ani.setDuration(FADE_IN_DURATION);
+		ani.setFillAfter(true);
+		ani.setAnimationListener(new AnimationListener(){
+
+			@Override
+			public void onAnimationEnd(Animation animation) {
+				champInfoContent.setVisibility(View.GONE);
+				
+				Animation ani = new ResizeAnimation(champInfoPanel, champInfoPanel.getWidth(), 0,
+						champInfoPanel.getHeight(), 0);
+				ani.setDuration(RESIZE_DURATION);
+	
+				champInfoPanel.startAnimation(ani);
+			
+				ani = new AlphaAnimation(1f, 0f);
+				ani.setDuration(RESIZE_DURATION);
+				ani.setAnimationListener(new AnimationListener() {
+
+					@Override
+					public void onAnimationEnd(Animation animation) {
+						overlay.setVisibility(View.INVISIBLE);
+						closingPanel = false;
+					}
+
+					@Override
+					public void onAnimationRepeat(Animation animation) {
+						// TODO Auto-generated method stub
+						
+					}
+
+					@Override
+					public void onAnimationStart(Animation animation) {
+						// TODO Auto-generated method stub
+						
+					}
+					
+				});
+				overlay.startAnimation(ani);
+			}
+
+			@Override
+			public void onAnimationRepeat(Animation animation) {}
+
+			@Override
+			public void onAnimationStart(Animation animation) {}
+			
+		});
+		champInfoContent.startAnimation(ani);
 	}
 
 	private void setUpSplash(int parallaxW) {
@@ -251,5 +428,14 @@ public class CraftActivity extends SherlockFragmentActivity implements ItemPicke
 	public void onRunePicked(RuneInfo rune) {
 		if (build.canAdd(rune)) 
 			build.addRune(rune);
+	}
+	
+	@Override
+	public void onBackPressed() {
+		if (panelOpen) {
+			closePanel();
+		} else {
+			super.onBackPressed();
+		}
 	}
 }

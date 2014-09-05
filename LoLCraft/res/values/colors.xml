@@ -5,6 +5,8 @@
     <color name="theme_color">#669900</color>
     
     <item name="white97" type="color">#F7FFFFFF</item>
+    <item name="black50" type="color">#80000000</item>
+    
 
     <item name="white" type="color">#FFFFFFFF</item>
     <item name="black" type="color">#FF000000</item>
