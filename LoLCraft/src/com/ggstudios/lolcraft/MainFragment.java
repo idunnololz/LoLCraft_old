@@ -1,7 +1,9 @@
 package com.ggstudios.lolcraft;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 import org.json.JSONException;
 
@@ -18,20 +20,32 @@ import android.widget.AdapterView.OnItemClickListener;
 import android.widget.BaseAdapter;
 import android.widget.GridView;
 import android.widget.ImageView;
+import android.widget.ListAdapter;
 import android.widget.TextView;
 
 import com.actionbarsherlock.app.SherlockFragment;
+import com.actionbarsherlock.view.Menu;
+import com.actionbarsherlock.view.MenuInflater;
+import com.actionbarsherlock.view.MenuItem;
+import com.actionbarsherlock.view.MenuItem.OnActionExpandListener;
+import com.actionbarsherlock.widget.SearchView;
+import com.actionbarsherlock.widget.SearchView.OnCloseListener;
+import com.actionbarsherlock.widget.SearchView.OnQueryTextListener;
 import com.ggstudios.lolcraft.LibraryUtils.OnChampionLoadListener;
 import com.ggstudios.utils.DebugLog;
 
-public class MainFragment extends SherlockFragment {
+public class MainFragment extends SherlockFragment implements OnQueryTextListener {
 	private static final String TAG = "MainFragment";
 
 	GridView content;
+	SearchView searchView;
 
 	@Override
 	public View onCreateView(LayoutInflater inflater, ViewGroup container,
 			Bundle savedInstanceState) {
+		
+		setHasOptionsMenu(true);
+		
 		View rootView = inflater.inflate(R.layout.fragment_main, container, false);
 
 		content = (GridView) rootView.findViewById(R.id.grid);
@@ -60,6 +74,33 @@ public class MainFragment extends SherlockFragment {
 		});
 
 		return rootView;
+	}
+	
+	@Override
+	public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+	    inflater.inflate(R.menu.main_fragment, menu);
+	    MenuItem searchItem = menu.findItem(R.id.action_search);
+	    searchView = (SearchView) searchItem.getActionView();
+	    searchView.setOnQueryTextListener(this);
+	    
+	    searchItem.setOnActionExpandListener(new OnActionExpandListener() {
+
+			@Override
+			public boolean onMenuItemActionExpand(MenuItem item) {
+				// TODO Auto-generated method stub
+				return true;
+			}
+
+			@Override
+			public boolean onMenuItemActionCollapse(MenuItem item) {
+				ListAdapter adapter = content.getAdapter();
+				if (adapter != null) {
+					((ChampionInfoAdapter) adapter).filter(null);
+				}
+				return true;
+			}
+	    	
+	    });
 	}
 	
 	public void initializeChampionInfo() {
@@ -126,6 +167,7 @@ public class MainFragment extends SherlockFragment {
 
 	public class ChampionInfoAdapter extends BaseAdapter {
 		private Context context;
+		private List<ChampionInfo> champInfoFull;
 		private List<ChampionInfo> champInfo;
 		private LayoutInflater inflater;
 
@@ -133,6 +175,7 @@ public class MainFragment extends SherlockFragment {
 
 		public ChampionInfoAdapter(Context c, List<ChampionInfo> champions) {
 			context = c;
+			champInfoFull = champions;
 			champInfo = champions;
 
 			inflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
@@ -148,6 +191,22 @@ public class MainFragment extends SherlockFragment {
 
 		public long getItemId(int position) {
 			return 0;
+		}
+		
+		public void filter(String text) {
+			if (text == null || text.length() == 0) {
+				champInfo = champInfoFull;
+			} else {
+				text = text.toLowerCase(Locale.US);
+				champInfo = new ArrayList<ChampionInfo>(champInfoFull.size());
+				for (ChampionInfo i : champInfoFull) {
+					if (i.name.toLowerCase(Locale.US).startsWith(text)) {
+						champInfo.add(i);
+					}
+				}
+			}
+			
+			notifyDataSetChanged();
 		}
 
 		// create a new ImageView for each item referenced by the Adapter
@@ -179,5 +238,20 @@ public class MainFragment extends SherlockFragment {
 
 			return convertView;
 		}
+	}
+
+	@Override
+	public boolean onQueryTextSubmit(String query) {
+		searchView.clearFocus();
+		return true;
+	}
+
+	@Override
+	public boolean onQueryTextChange(String newText) {
+		ListAdapter adapter = content.getAdapter();
+		if (adapter != null) {
+			((ChampionInfoAdapter) adapter).filter(newText);
+		}
+		return false;
 	}
 }

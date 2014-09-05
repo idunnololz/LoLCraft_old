@@ -48,6 +48,7 @@ public class SplashFetcher {
 
 	public void fetchChampionSplash(final String key, final OnDrawableRetrievedListener listener) {
 		if (diskCache != null) {
+			if (diskCache.isInErrorState()) return;
 			final String sanatizedKey = key.toLowerCase(Locale.US);
 
 			if (diskCache.containsKey(sanatizedKey)) {
@@ -57,7 +58,7 @@ public class SplashFetcher {
 			}
 		}
 
-		new AsyncTask<String, Void, Drawable>(){
+		AsyncTask<String, Void, Drawable> task = new AsyncTask<String, Void, Drawable>(){
 
 			@Override
 			protected Drawable doInBackground(String... params) {
@@ -68,6 +69,8 @@ public class SplashFetcher {
 						}
 					}
 				}			
+				
+				if (diskCache.isInErrorState()) return null;
 
 				final String sanatizedKey = key.toLowerCase(Locale.US);
 
@@ -95,7 +98,9 @@ public class SplashFetcher {
 				listener.onDrawableRetrieved(d);
 			}
 
-		}.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, key);
+		};
+		
+		Utils.executeAsyncTask(task, key);
 	}
 
 	public static interface OnDrawableRetrievedListener {

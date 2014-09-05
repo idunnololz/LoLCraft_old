@@ -9,6 +9,7 @@ public class RuneInfo {
 	int id;
 	
 	String name;
+	String lowerName;
 	String shortName;
 	String veryShortName;
 	String desc;
@@ -16,6 +17,8 @@ public class RuneInfo {
 	String iconAssetName;
 	int runeType;
 	Drawable icon;
+	
+	String colloq;
 	
 	JSONObject stats;
 	

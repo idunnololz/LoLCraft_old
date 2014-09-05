@@ -3,6 +3,7 @@ package com.ggstudios.lolcraft;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 import org.json.JSONException;
 
@@ -17,15 +18,20 @@ import android.graphics.drawable.Drawable;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v4.app.DialogFragment;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.Window;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
 import android.widget.AdapterView.OnItemLongClickListener;
 import android.widget.BaseAdapter;
+import android.widget.EditText;
 import android.widget.GridView;
 import android.widget.ImageView;
+import android.widget.ListAdapter;
 import android.widget.TextView;
 
 public class ItemPickerDialogFragment extends DialogFragment {
@@ -35,25 +41,47 @@ public class ItemPickerDialogFragment extends DialogFragment {
 
 	private GridView content;
 	private List<ItemInfo> items;
+	private EditText searchField;
 	
 	private int champId = -1;
 	
 	@Override
 	public Dialog onCreateDialog(Bundle savedInstanceState) {
-		AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
-		// Get the layout inflater
-		LayoutInflater inflater = getActivity().getLayoutInflater();
+	  Dialog dialog = super.onCreateDialog(savedInstanceState);
+
+	  // request a window without the title
+	  dialog.getWindow().requestFeature(Window.FEATURE_NO_TITLE);
+	  
+	  if (android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.HONEYCOMB) {
+		  dialog.getWindow().setBackgroundDrawableResource(R.drawable.dialog_full_holo_light);
+	  }
+	  
+	  return dialog;
+	}
+
+	@Override
+    public View onCreateView(LayoutInflater inflater, ViewGroup container,
+            Bundle savedInstanceState) {
 		
 		View rootView = inflater.inflate(R.layout.dialog_fragment_item_picker, null);
 
-		// Inflate and set the layout for the dialog
-		// Pass null as the parent view because its going in the dialog layout
-		builder.setView(rootView);
-	
 		content = (GridView) rootView.findViewById(R.id.itemGrid);
 		
 		items = LibraryManager.getInstance()
 				.getItemLibrary().getPurchasableItemInfo();
+		
+		searchField = (EditText) rootView.findViewById(R.id.searchField);
+		searchField.addTextChangedListener(new TextWatcher(){
+	        public void afterTextChanged(Editable s) {
+	        	String str = s.toString();
+	        	ListAdapter adapter = content.getAdapter();
+	        	if (adapter != null) {
+	        		((ItemInfoAdapter) adapter).filter(str);
+	        	}
+	        }
+	        public void beforeTextChanged(CharSequence s, int start, int count, int after){}
+	        public void onTextChanged(CharSequence s, int start, int before, int count){}
+	    }); 
 		
 		if (items == null) {
 			initializeItemInfo();
@@ -80,7 +108,7 @@ public class ItemPickerDialogFragment extends DialogFragment {
 			public void onItemClick(AdapterView<?> parent, View view,
 					int position, long id) {
 
-				((ItemPickerDialogListener)getActivity()).onItemPicked(items.get(position));
+				((ItemPickerDialogListener)getActivity()).onItemPicked((ItemInfo) parent.getItemAtPosition(position));
 				dismiss();
 			}
 			
@@ -91,7 +119,7 @@ public class ItemPickerDialogFragment extends DialogFragment {
 			champId = args.getInt(EXTRA_CHAMPION_ID, -1);
 		}
 		
-		return builder.create();
+		return rootView;
 	}
 	
 	@Override
@@ -193,24 +221,56 @@ public class ItemPickerDialogFragment extends DialogFragment {
 
 	public class ItemInfoAdapter extends BaseAdapter {
 		private Context context;
-		private List<ItemInfo> champInfo;
+		private List<ItemInfo> itemInfoAll;
+		private List<ItemInfo> itemInfo;
 		private LayoutInflater inflater;
 
 		private Drawable placeHolder;
+		
+		private String lastQuery;
 
 		public ItemInfoAdapter(Context c, List<ItemInfo> Items) {
 			context = c;
-			champInfo = Items;
+			itemInfoAll = Items;
+			itemInfo = Items;
 
 			inflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
 		}
+		
+		public void filter(String s) {
+			if (s == null || s.length() == 0) {
+				itemInfo = itemInfoAll;
+			} else {
+				List<ItemInfo> last = itemInfo;
+				itemInfo = new ArrayList<ItemInfo>();
+				
+				s = s.toLowerCase(Locale.US);
+
+				if (lastQuery != null && s.startsWith(lastQuery)) {
+					for (ItemInfo i : last) {
+						if (i.lowerName.contains(s) || i.colloq.contains(s)) {
+							itemInfo.add(i);
+						}
+					}
+				} else {
+					for (ItemInfo i : itemInfoAll) {
+						if (i.lowerName.contains(s) || i.colloq.contains(s)) {
+							itemInfo.add(i);
+						}
+					}
+				}
+			}
+			
+			notifyDataSetChanged();
+			lastQuery = s;
+		}
 
 		public int getCount() {
-			return champInfo.size();
+			return itemInfo.size();
 		}
 
 		public Object getItem(int position) {
-			return champInfo.get(position);
+			return itemInfo.get(position);
 		}
 
 		public long getItemId(int position) {
@@ -234,7 +294,7 @@ public class ItemPickerDialogFragment extends DialogFragment {
 				holder = (ViewHolder) convertView.getTag();
 			}
 
-			ItemInfo info = champInfo.get(position);
+			ItemInfo info = itemInfo.get(position);
 
 			holder.gold.setText("" + info.totalGold);
 

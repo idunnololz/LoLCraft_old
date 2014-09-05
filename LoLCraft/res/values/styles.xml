@@ -2,8 +2,7 @@
 
     <!-- Application theme. -->
     <style name="AppTheme" parent="Theme.Sherlock.Light.DarkActionBar">
-        <item name="actionBarStyle">@style/MainActionBarStyle</item>
-        <item name="android:actionBarStyle">@style/MainActionBarStyle</item>
+        <item name="actionBarStyle">@style/MainActionBarStyle</item>        <item name="android:actionBarStyle">@style/MainActionBarStyle</item>
     </style>
 
     <style name="MainActionBarStyle" parent="Widget.Sherlock.Light.ActionBar.Solid.Inverse">

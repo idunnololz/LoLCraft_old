@@ -309,7 +309,10 @@ public class LibraryUtils {
 				info.totalGold = gold.getInt("total");
 				info.purchasable = gold.getBoolean("purchasable");
 
+				info.name = value.getString("name");
+				info.lowerName = info.name.toLowerCase(Locale.US);
 				info.stats = value.getJSONObject("stats");
+				info.colloq = value.getString("colloq");
 
 				info.from = new ArrayList<Integer>();
 				info.into = new ArrayList<Integer>();
@@ -414,6 +417,7 @@ public class LibraryUtils {
 				info.id = Integer.valueOf(key);
 
 				info.name = value.getString("name");
+				info.lowerName = info.name.toLowerCase(Locale.US);
 				info.shortName = shortenRuneName(info.name);
 				info.veryShortName = shortenRuneNameMore(info.shortName);
 				info.desc = value.getString("description");
@@ -421,6 +425,7 @@ public class LibraryUtils {
 				info.stats = value.getJSONObject("stats");
 				info.iconAssetName = value.getJSONObject("image").getString("full");
 				info.runeType = typeToId.get(rune.getString("type"));
+				info.colloq = value.getString("colloq");
 
 				info.rawJson = value;
 

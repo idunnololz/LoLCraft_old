@@ -1,10 +1,13 @@
 package com.ggstudios.lolcraft;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 import org.json.JSONException;
 
+import com.ggstudios.lolcraft.ItemPickerDialogFragment.ItemInfoAdapter;
 import com.ggstudios.utils.DebugLog;
 
 import android.app.Activity;
@@ -19,37 +22,48 @@ import android.graphics.drawable.TransitionDrawable;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v4.app.DialogFragment;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.Window;
 import android.widget.AdapterView;
 import android.widget.BaseAdapter;
+import android.widget.EditText;
 import android.widget.GridView;
 import android.widget.ImageView;
+import android.widget.ListAdapter;
 import android.widget.TextView;
 import android.widget.AdapterView.OnItemClickListener;
 import android.widget.AdapterView.OnItemLongClickListener;
 
-public class RunePickerDialogFragment extends DialogFragment {
+public class RunePickerDialogFragment extends ItemPickerDialogFragment {
 	private static final String TAG = RunePickerDialogFragment.class.getSimpleName();
 	
 	private static final int ANIMATION_DURATION = 250;
 
 	private GridView content;
 	private List<RuneInfo> runes;
+	private EditText searchField;
 
 	@Override
-	public Dialog onCreateDialog(Bundle savedInstanceState) {
-		AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
-		// Get the layout inflater
-		LayoutInflater inflater = getActivity().getLayoutInflater();
+    public View onCreateView(LayoutInflater inflater, ViewGroup container,
+            Bundle savedInstanceState) {
 
-		View rootView = inflater.inflate(R.layout.dialog_fragment_item_picker, null);
-
-		// Inflate and set the layout for the dialog
-		// Pass null as the parent view because its going in the dialog layout
-		builder.setView(rootView);
-
+		View rootView = inflater.inflate(R.layout.dialog_fragment_item_picker, container);
+		searchField = (EditText) rootView.findViewById(R.id.searchField);
+		searchField.addTextChangedListener(new TextWatcher(){
+	        public void afterTextChanged(Editable s) {
+	        	String str = s.toString();
+	        	ListAdapter adapter = content.getAdapter();
+	        	if (adapter != null) {
+	        		((RuneInfoAdapter) adapter).filter(str);
+	        	}
+	        }
+	        public void beforeTextChanged(CharSequence s, int start, int count, int after){}
+	        public void onTextChanged(CharSequence s, int start, int before, int count){}
+	    });
 		
 		content = (GridView) rootView.findViewById(R.id.itemGrid);
 		content.setNumColumns(GridView.AUTO_FIT);
@@ -83,14 +97,14 @@ public class RunePickerDialogFragment extends DialogFragment {
 			public void onItemClick(AdapterView<?> parent, View view,
 					int position, long id) {
 
-				((RunePickerDialogListener)getActivity()).onRunePicked(runes.get(position));
+				((RunePickerDialogListener)getActivity()).onRunePicked((RuneInfo) parent.getItemAtPosition(position));
 				dismiss();
 			}
 
 		});
 
-		return builder.create();
-	}
+		return rootView;
+    }
 
 	@Override
 	public void onAttach(Activity activity) {
@@ -127,11 +141,11 @@ public class RunePickerDialogFragment extends DialogFragment {
 			@Override
 			protected void onPostExecute(Void v) {
 				filterAndShowRunes();
+
+				new IconFetcher().execute(getActivity().getAssets());
 			}
 
 		}.execute();
-		
-		new IconFetcher().execute(getActivity().getAssets());
 	}
 
 	private class ViewHolder {
@@ -145,11 +159,15 @@ public class RunePickerDialogFragment extends DialogFragment {
 	public class RuneInfoAdapter extends BaseAdapter {
 		private Context context;
 		private List<RuneInfo> runes;
+		private List<RuneInfo> runesFull;
 		private LayoutInflater inflater;
+		
+		private String lastQuery;
 
 		public RuneInfoAdapter(Context c, List<RuneInfo> runes) {
 			context = c;
 			this.runes = runes;
+			runesFull = runes;
 
 			inflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
 		}
@@ -164,6 +182,34 @@ public class RunePickerDialogFragment extends DialogFragment {
 
 		public long getItemId(int position) {
 			return 0;
+		}
+		
+		public void filter(String s) {
+			if (s == null || s.length() == 0) {
+				runes = runesFull;
+			} else {
+				List<RuneInfo> last = runes;
+				runes = new ArrayList<RuneInfo>();
+				
+				s = s.toLowerCase(Locale.US);
+
+				if (lastQuery != null && s.startsWith(lastQuery)) {
+					for (RuneInfo i : last) {
+						if (i.lowerName.contains(s) || i.colloq.contains(s)) {
+							runes.add(i);
+						}
+					}
+				} else {
+					for (RuneInfo i : runesFull) {
+						if (i.lowerName.contains(s) || i.colloq.contains(s)) {
+							runes.add(i);
+						}
+					}
+				}
+			}
+			
+			notifyDataSetChanged();
+			lastQuery = s;
 		}
 
 		// create a new ImageView for each item referenced by the Adapter

@@ -24,7 +24,6 @@ public class MainActivity extends SherlockFragmentActivity {
         }
     }
 
-
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         

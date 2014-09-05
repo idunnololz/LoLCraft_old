@@ -16,6 +16,8 @@ public class ItemInfo {
 	String key;
 	int id;
 	String name;
+	String lowerName;
+	String colloq;
 	
 	JSONObject stats;
 	

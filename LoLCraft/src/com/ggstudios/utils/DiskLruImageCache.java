@@ -26,6 +26,8 @@ public class DiskLruImageCache {
 	private static final int APP_VERSION = 1;
 	private static final int VALUE_COUNT = 1;
 
+	private boolean errorState = false;
+
 	public DiskLruImageCache( Context context,String uniqueName, int diskCacheSize,
 			CompressFormat compressFormat, int quality ) {
 		try {
@@ -35,7 +37,12 @@ public class DiskLruImageCache {
 			mCompressQuality = quality;
 		} catch (IOException e) {
 			e.printStackTrace();
+			errorState = true;
 		}
+	}
+	
+	public boolean isInErrorState() {
+		return errorState;
 	}
 
 	private boolean writeBitmapToFile( Bitmap bitmap, DiskLruCache.Editor editor )

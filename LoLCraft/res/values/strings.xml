@@ -3,7 +3,10 @@
 
     <string name="app_name">LoL Craft</string>
     <string name="hello_world">Hello world!</string>
+    
     <string name="action_settings">Settings</string>
+    <string name="action_search">Search</string>
+    
     <string name="champion_portrait">Champion portrait</string>
     <string name="item_thumb">Item thumbnail</string>
     
