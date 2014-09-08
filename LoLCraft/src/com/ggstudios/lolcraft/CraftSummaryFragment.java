@@ -37,6 +37,73 @@ public class CraftSummaryFragment extends SherlockFragment {
 	}
 	
 	private static class StatAdapter extends BaseAdapter {
+		
+		private static final String[] STAT_NAME = new String[] {
+			"Null",
+			"BonusHp",
+			"BonusHpRegen",
+			"BonusMp",
+			"BonusMpRegen",
+			"BonusAd",
+			"BonusAttackSpeed(%)",
+			"BonusArmor",
+			"BonusMr",
+			"BonusMs",
+			"BonusRange",
+			"BonusCrit",
+			"BonusAp",
+			"BonusLifesteal",
+			"BonusMovementSpeed(%)",
+			"BonusCdr(%)",
+			"BonusArmorPen",
+			"BonusEnergy",
+			"BonusEnergyRegen",
+			"BonusGoldPer10",
+			"BonusMagicPenetration",
+			"BonusCooldownMod",
+			"DeathTimerMod",
+			"BonusApPercent",
+			"SpellVamp",
+			"MagicPen(%)",
+			"ArmorPen(%)",
+			"na",
+			"na",
+			"na",
+			"na",
+			"na",
+			"na",
+			"na",
+			"na",
+			"na",
+			"na",
+			"na",
+			"na",
+			"na",
+			
+			"TotalArmor",
+			"TotalAd",
+			"TotalHp",
+			"FinalCooldownMod",
+			"TotalAp",
+			"TotalMs",
+			"na",
+			"na",
+			"na",
+			"na",
+			
+			"BonusAd",
+			"BonusHp",
+			"BonusMs",
+			"na",
+			"na",
+			"na",
+			"na",
+			"na",
+			"na",
+			"na",
+			"na",
+			"na",
+		};
 
 		LayoutInflater inflater;
 		double[] stats;
@@ -77,7 +144,7 @@ public class CraftSummaryFragment extends SherlockFragment {
 				holder = (ViewHolder) convertView.getTag();
 			}
 			
-			holder.txtKey.setText(position + "");
+			holder.txtKey.setText(STAT_NAME[position]);
 			holder.txtValue.setText(stats[position] + "");
 			
 			return convertView;

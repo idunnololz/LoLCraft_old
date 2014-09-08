@@ -48,12 +48,12 @@ public class ItemPickerDialogFragment extends DialogFragment {
 	@Override
 	public Dialog onCreateDialog(Bundle savedInstanceState) {
 	  Dialog dialog = super.onCreateDialog(savedInstanceState);
-
-	  // request a window without the title
-	  dialog.getWindow().requestFeature(Window.FEATURE_NO_TITLE);
 	  
 	  if (android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.HONEYCOMB) {
+		  setStyle(DialogFragment.STYLE_NO_TITLE, android.R.style.Theme_Dialog);
 		  dialog.getWindow().setBackgroundDrawableResource(R.drawable.dialog_full_holo_light);
+	  } else {
+		  setStyle(DialogFragment.STYLE_NO_TITLE, android.R.style.Theme_Holo_Light_Dialog);
 	  }
 	  
 	  return dialog;
@@ -63,7 +63,7 @@ public class ItemPickerDialogFragment extends DialogFragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
             Bundle savedInstanceState) {
 		
-		View rootView = inflater.inflate(R.layout.dialog_fragment_item_picker, null);
+		View rootView = inflater.inflate(R.layout.dialog_fragment_item_picker, container, false);
 
 		content = (GridView) rootView.findViewById(R.id.itemGrid);
 		
@@ -95,7 +95,7 @@ public class ItemPickerDialogFragment extends DialogFragment {
 			public boolean onItemLongClick(AdapterView<?> parent, View view,
 					int position, long id) {
 				
-				DebugLog.d(TAG, items.get(position).rawJson.toString());
+				DebugLog.d(TAG, ((ItemInfo) parent.getItemAtPosition(position)).rawJson.toString());
 				
 				return false;
 			}

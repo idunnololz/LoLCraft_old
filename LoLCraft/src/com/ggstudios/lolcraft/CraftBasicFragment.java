@@ -91,13 +91,17 @@ public class CraftBasicFragment extends SherlockFragment implements BuildObserve
 	private int seekBarPadding;
 
 	private static final DecimalFormat statFormat = new DecimalFormat("###.##");
-	private static final DecimalFormat apFormat = new DecimalFormat("###");
+	private static final DecimalFormat intStatFormat = new DecimalFormat("###");
 
 	private void setStat(TextView tv, double base, double gain, int level, double itemBonus) {
+		setStat(tv, base, gain, level, itemBonus, statFormat);
+	}
+	
+	private void setStat(TextView tv, double base, double gain, int level, double itemBonus, DecimalFormat df) {
 		double levelBonus = gain * level;
 		double total = base + levelBonus + itemBonus;
 
-		printStat(tv, total, itemBonus, levelBonus, true, statFormat);
+		printStat(tv, total, itemBonus, levelBonus, true, df);
 	}
 
 	private void setStatAs(TextView tv, double base, double gain, int level, double itemBonus) {
@@ -505,18 +509,18 @@ public class CraftBasicFragment extends SherlockFragment implements BuildObserve
 	private void updateStats() {
 		ChampionInfo info = champInfo;
 
-		setStat(txtHp, 			info.hp, 		info.hpG, 		level, build.getBonusHp());
+		setStat(txtHp, 			info.hp, 		info.hpG, 		level, build.getBonusHp(),			intStatFormat);
 		setStat(txtHpRegen, 	info.hpRegen, 	info.hpRegenG, 	level, build.getBonusHpRegen());
-		setLevelessStat(txtMs, 	info.ms, 		0, 				level, build.getBonusMs());
-		setStat(txtMp, 			info.mp, 		info.mpG, 		level, build.getBonusMp());
+		setLevelessStat(txtMs, 	info.ms, 		0, 				level, build.getBonusMs(), 	intStatFormat);
+		setStat(txtMp, 			info.mp, 		info.mpG, 		level, build.getBonusMp(),			intStatFormat);
 		setStat(txtMpRegen, 	info.mpRegen, 	info.mpRegenG, 	level, build.getBonusMpRegen());
 		setLevelessStat(txtRange, 	info.range, 0, 				level, build.getBonusRange());
 
-		setStat(txtAd, 			info.ad, 		info.adG, 		level, build.getBonusAd());
+		setStat(txtAd, 			info.ad, 		info.adG, 		level, build.getBonusAd(),			intStatFormat);
 		setStatAs(txtAs, 		info.as, 		info.asG, 		level, build.getBonusAs());
-		setLevelessStat(txtAp, 	0, 				0,		 		level, build.getBonusAp(),		apFormat);
-		setStat(txtAr, 			info.ar, 		info.arG, 		level, build.getBonusAr());
-		setStat(txtMr, 			info.mr, 		info.mrG, 		level, build.getBonusMr());
+		setLevelessStat(txtAp, 	0, 				0,		 		level, build.getBonusAp(),			intStatFormat);
+		setStat(txtAr, 			info.ar, 		info.arG, 		level, build.getBonusAr(),			intStatFormat);
+		setStat(txtMr, 			info.mr, 		info.mrG, 		level, build.getBonusMr(),			intStatFormat);
 	}
 
 	private void updateBuild() {

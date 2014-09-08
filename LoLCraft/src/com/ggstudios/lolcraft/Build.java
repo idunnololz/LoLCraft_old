@@ -2,12 +2,14 @@ package com.ggstudios.lolcraft;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Stack;
 
 import org.json.JSONException;
+import org.json.JSONObject;
 
 import android.util.SparseIntArray;
 
@@ -54,21 +56,29 @@ public class Build {
 	private static final int STAT_LS = 13;
 	private static final int STAT_MSP = 14;
 	private static final int STAT_CDR = 15;
-	private static final int STAT_ARP = 16;
+	private static final int STAT_ARPEN = 16;
 	private static final int STAT_NRG = 17;
 	private static final int STAT_NRGR = 18;
 	private static final int STAT_GP10 = 19;
 	private static final int STAT_MRP = 20;
 	private static final int STAT_CD = 21;
 	private static final int STAT_DT = 22;
+	private static final int STAT_APP = 23;
+	private static final int STAT_SV = 24;
+	private static final int STAT_MPENP = 25;
+	private static final int STAT_APENP = 26;
 	
 	private static final int STAT_TOTAL_AR = 40;
 	private static final int STAT_TOTAL_AD = 41;
 	private static final int STAT_TOTAL_HP = 42;
 	private static final int STAT_CD_MOD = 43;
+	private static final int STAT_TOTAL_AP = 44;
+	private static final int STAT_TOTAL_MS = 45;
 	
 	private static final int STAT_BONUS_AD = 50;
 	private static final int STAT_BONUS_HP = 51;
+	private static final int STAT_BONUS_MS = 52;
+	private static final int STAT_BONUS_AP = 44;	// note that cause base AP is always 0, bonusAp always = totalAp
 
 	private static final int MAX_STATS = 60;
 	private static final int MAX_ACTIVE_ITEMS = 6;
@@ -117,15 +127,15 @@ public class Build {
 		statKeyToIndex.put("PercentLifeStealMod", 	STAT_LS);
 		statKeyToIndex.put("PercentMPPoolMod", 		STAT_NULL);
 		statKeyToIndex.put("PercentMPRegenMod", 	STAT_NULL);
-		statKeyToIndex.put("PercentMagicDamageMod", STAT_NULL);
+		statKeyToIndex.put("PercentMagicDamageMod", STAT_APP);
 		statKeyToIndex.put("PercentMovementSpeedMod",	STAT_MSP);
 		statKeyToIndex.put("PercentPhysicalDamageMod", 	STAT_NULL);
 		statKeyToIndex.put("PercentSpellBlockMod", 		STAT_NULL);
-		statKeyToIndex.put("PercentSpellVampMod", 		STAT_NULL);	// this stat is actually useful but not doc'd
+		statKeyToIndex.put("PercentSpellVampMod", 		STAT_SV);
 		
 		statKeyToIndex.put("rFlatArmorModPerLevel", 			STAT_AR | FLAG_SCALING);	
-		statKeyToIndex.put("rFlatArmorPenetrationMod", 			STAT_ARP);	
-		statKeyToIndex.put("rFlatArmorPenetrationModPerLevel", 	STAT_ARP | FLAG_SCALING);
+		statKeyToIndex.put("rFlatArmorPenetrationMod", 			STAT_ARPEN);	
+		statKeyToIndex.put("rFlatArmorPenetrationModPerLevel", 	STAT_ARPEN | FLAG_SCALING);
 		statKeyToIndex.put("rFlatEnergyModPerLevel", 			STAT_NRG | FLAG_SCALING);	
 		statKeyToIndex.put("rFlatEnergyRegenModPerLevel", 		STAT_NRGR | FLAG_SCALING);	
 		statKeyToIndex.put("rFlatGoldPer10Mod", 				STAT_GP10);	
@@ -138,13 +148,16 @@ public class Build {
 		statKeyToIndex.put("rFlatMagicPenetrationModPerLevel", 	STAT_MRP | FLAG_SCALING);
 		statKeyToIndex.put("rFlatPhysicalDamageModPerLevel", 	STAT_AD | FLAG_SCALING);	
 		statKeyToIndex.put("rFlatSpellBlockModPerLevel", 		STAT_MR | FLAG_SCALING);
-		statKeyToIndex.put("rPercentCooldownMod", 				STAT_CD);	
+		statKeyToIndex.put("rPercentCooldownMod", 				STAT_CD);					// negative val...
 		statKeyToIndex.put("rPercentCooldownModPerLevel", 		STAT_CD | FLAG_SCALING);
 		statKeyToIndex.put("rPercentTimeDeadMod", 				STAT_DT);	
 		statKeyToIndex.put("rPercentTimeDeadModPerLevel", 		STAT_DT | FLAG_SCALING);	
+		statKeyToIndex.put("rPercentMagicPenetrationMod",		STAT_MPENP);
+		statKeyToIndex.put("rPercentArmorPenetrationMod",		STAT_APENP);
+		
 		
 		// keys used for skills...
-		statKeyToIndex.put("spelldamage", 			STAT_AP);
+		statKeyToIndex.put("spelldamage", 			STAT_TOTAL_AP);
 		statKeyToIndex.put("attackdamage", 			STAT_TOTAL_AD);
 		statKeyToIndex.put("bonushealth", 			STAT_BONUS_HP);
 		statKeyToIndex.put("armor", 				STAT_TOTAL_AR);
@@ -296,11 +309,24 @@ public class Build {
 			item.active = false;
 		}
 		
+		HashSet<Integer> alreadyAdded = new HashSet<Integer>();
+		
 		for (int i = enabledBuildEnd - 1; i >= enabledBuildStart; i--) {
 			BuildItem item = itemBuild.get(i);
 			if (item.to == null || itemBuild.indexOf(item.to) >= enabledBuildEnd) {
 				item.active = true;
-				appendStat(itemBuild.get(i).info);
+				
+				ItemInfo info = item.info;
+				
+				appendStat(info.stats);
+				
+				int id = info.id;
+				if (info.uniquePassiveStat != null && !alreadyAdded.contains(id)) {
+					alreadyAdded.add(info.id);
+					appendStat(info.uniquePassiveStat);
+				}
+				
+				
 				active++;
 				
 				if (active == MAX_ACTIVE_ITEMS)
@@ -312,12 +338,12 @@ public class Build {
 		notifyBuildStatsChanged();
 	}
 
-	private void appendStat(ItemInfo item) {
-		Iterator<?> iter = item.stats.keys();
+	private void appendStat(JSONObject jsonStats) {
+		Iterator<?> iter = jsonStats.keys();
 		while (iter.hasNext()) {
 			String key = (String) iter.next();
 			try {
-				stats[statKeyToIndex.get(key)] += item.stats.getDouble(key);
+				stats[statKeyToIndex.get(key)] += jsonStats.getDouble(key);
 
 			} catch (JSONException e) {
 				DebugLog.e(TAG, e);
@@ -352,9 +378,12 @@ public class Build {
 		stats[STAT_TOTAL_AD] = stats[STAT_AD] + champ.ad + champ.adG * champLevel;
 		stats[STAT_TOTAL_HP] = stats[STAT_HP] + champ.hp + champ.hpG * champLevel;
 		stats[STAT_CD_MOD] = 1.0 - stats[STAT_CDR];
+		stats[STAT_TOTAL_MS] = (stats[STAT_MS] + champ.ms) * stats[STAT_MSP] + stats[STAT_MS] + champ.ms;
+		stats[STAT_TOTAL_AP] = stats[STAT_AP] * (stats[STAT_APP] + 1);
 		
 		stats[STAT_BONUS_AD] = stats[STAT_TOTAL_AD] - champ.ad;
 		stats[STAT_BONUS_HP] = stats[STAT_TOTAL_HP] - champ.hp;
+		stats[STAT_BONUS_MS] = stats[STAT_TOTAL_MS] - champ.ms;
 	}
 	
 	public BuildRune addRune(RuneInfo rune) {
@@ -528,7 +557,7 @@ public class Build {
 	}
 
 	public double getBonusMs() {
-		return stats[STAT_MS];
+		return stats[STAT_BONUS_MS];
 	}
 
 	public double getBonusRange() {
@@ -536,7 +565,7 @@ public class Build {
 	}
 
 	public double getBonusAp() {
-		return stats[STAT_AP];
+		return stats[STAT_BONUS_AP];
 	}
 	
 	public double[] getRawStats() {

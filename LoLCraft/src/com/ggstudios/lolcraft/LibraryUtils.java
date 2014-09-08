@@ -312,6 +312,7 @@ public class LibraryUtils {
 				info.name = value.getString("name");
 				info.lowerName = info.name.toLowerCase(Locale.US);
 				info.stats = value.getJSONObject("stats");
+				info.uniquePassiveStat = value.optJSONObject("up");
 				info.colloq = value.getString("colloq");
 
 				info.from = new ArrayList<Integer>();

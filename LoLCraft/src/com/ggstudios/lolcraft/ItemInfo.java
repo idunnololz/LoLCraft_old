@@ -20,6 +20,7 @@ public class ItemInfo {
 	String colloq;
 	
 	JSONObject stats;
+	JSONObject uniquePassiveStat;
 	
 	JSONObject rawJson;
 	String requiredChamp;

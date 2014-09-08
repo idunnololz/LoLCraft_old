@@ -32,6 +32,7 @@ import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import com.actionbarsherlock.app.SherlockFragmentActivity;
+import com.actionbarsherlock.view.Menu;
 import com.actionbarsherlock.view.MenuItem;
 import com.ggstudios.animation.ResizeAnimation;
 import com.ggstudios.lolcraft.ChampionInfo.OnFullyLoadedListener;
@@ -50,7 +51,7 @@ public class CraftActivity extends SherlockFragmentActivity implements ItemPicke
 
 	public static final String EXTRA_CHAMPION_ID = "champId";
 
-	private static final int PARALLAX_WIDTH_DP = 30;
+	private static final int PARALLAX_WIDTH_DP = 20;
 	private static final int RESIZE_DURATION = 200;
 	private static final int FADE_IN_DURATION = 100;
 
@@ -379,6 +380,14 @@ public class CraftActivity extends SherlockFragmentActivity implements ItemPicke
 			});
 		}
 	}
+	
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        
+        // Inflate the menu; this adds items to the action bar if it is present.
+        getSupportMenuInflater().inflate(R.menu.craft_activity, menu);
+        return true;
+    }
 
 	@Override
 	public boolean onOptionsItemSelected(MenuItem item) {
@@ -386,6 +395,9 @@ public class CraftActivity extends SherlockFragmentActivity implements ItemPicke
 		// Respond to the action bar's Up/Home button
 		case android.R.id.home:
 			NavUtils.navigateUpFromSameTask(this);
+			return true;
+		case R.id.action_feedback:
+			Utils.startFeedbackIntent(this);
 			return true;
 		}
 		return super.onOptionsItemSelected(item);

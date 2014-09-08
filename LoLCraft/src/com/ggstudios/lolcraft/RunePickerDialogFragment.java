@@ -7,12 +7,9 @@ import java.util.Locale;
 
 import org.json.JSONException;
 
-import com.ggstudios.lolcraft.ItemPickerDialogFragment.ItemInfoAdapter;
 import com.ggstudios.utils.DebugLog;
 
 import android.app.Activity;
-import android.app.AlertDialog;
-import android.app.Dialog;
 import android.content.Context;
 import android.content.res.AssetManager;
 import android.graphics.Color;
@@ -21,13 +18,11 @@ import android.graphics.drawable.Drawable;
 import android.graphics.drawable.TransitionDrawable;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.support.v4.app.DialogFragment;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.Window;
 import android.widget.AdapterView;
 import android.widget.BaseAdapter;
 import android.widget.EditText;
@@ -51,7 +46,7 @@ public class RunePickerDialogFragment extends ItemPickerDialogFragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
             Bundle savedInstanceState) {
 
-		View rootView = inflater.inflate(R.layout.dialog_fragment_item_picker, container);
+		View rootView = inflater.inflate(R.layout.dialog_fragment_item_picker, container, false);
 		searchField = (EditText) rootView.findViewById(R.id.searchField);
 		searchField.addTextChangedListener(new TextWatcher(){
 	        public void afterTextChanged(Editable s) {
@@ -84,7 +79,7 @@ public class RunePickerDialogFragment extends ItemPickerDialogFragment {
 			public boolean onItemLongClick(AdapterView<?> parent, View view,
 					int position, long id) {
 
-				DebugLog.d(TAG, runes.get(position).rawJson.toString());
+				DebugLog.d(TAG, ((RuneInfo) parent.getItemAtPosition(position)).rawJson.toString());
 
 				return false;
 			}
