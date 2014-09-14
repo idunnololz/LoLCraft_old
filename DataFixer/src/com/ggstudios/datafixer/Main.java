@@ -1,7 +1,12 @@
+package com.ggstudios.datafixer;
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -43,8 +48,7 @@ public class Main {
 		3072, "PercentLifeStealMod",		0.2, null,
 		3504, "PercentMovementSpeedMod",	0.08, null,
 	};
-
-
+	
 	public static void fixItemJson() throws IOException, JSONException {
 		// Load the JSON object containing champ data first...
 		URL url = Main.class.getClassLoader().getResource("res/item.json");
@@ -126,7 +130,8 @@ public class Main {
 
 	public static void main(String[] args) {
 		try {
-			fixItemJson();
+			//fixItemJson();
+			ChampionInfoFixer.fixChampionInfo();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
