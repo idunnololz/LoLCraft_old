@@ -12,8 +12,6 @@ import android.widget.TextView;
 import com.actionbarsherlock.app.SherlockFragment;
 
 public class CraftSummaryFragment extends SherlockFragment {
-	private ListView statList;
-	
 	private Build build;
 	
 	@Override
@@ -22,133 +20,8 @@ public class CraftSummaryFragment extends SherlockFragment {
 
 		build = StateManager.getInstance().getActiveBuild();
 		
-		View rootView = inflater.inflate(R.layout.fragment_craft_summary, container, false);
-		
-		statList = (ListView) rootView.findViewById(R.id.statList);
-		
-		statList.setAdapter(new StatAdapter(getActivity(), build.getRawStats()));
+		View rootView = inflater.inflate(R.layout.dialog_fragment_stat_summary, container, false);
 		
 		return rootView;
-	}
-	
-	private static class ViewHolder {
-		TextView txtKey;
-		TextView txtValue;
-	}
-	
-	private static class StatAdapter extends BaseAdapter {
-		
-		private static final String[] STAT_NAME = new String[] {
-			"Null",
-			"BonusHp",
-			"BonusHpRegen",
-			"BonusMp",
-			"BonusMpRegen",
-			"BonusAd",
-			"BonusAttackSpeed(%)",
-			"BonusArmor",
-			"BonusMr",
-			"BonusMs",
-			"BonusRange",
-			"BonusCrit",
-			"BonusAp",
-			"BonusLifesteal",
-			"BonusMovementSpeed(%)",
-			"BonusCdr(%)",
-			"BonusArmorPen",
-			"BonusEnergy",
-			"BonusEnergyRegen",
-			"BonusGoldPer10",
-			"BonusMagicPenetration",
-			"BonusCooldownMod",
-			"DeathTimerMod",
-			"BonusApPercent",
-			"SpellVamp",
-			"MagicPen(%)",
-			"ArmorPen(%)",
-			"na",
-			"na",
-			"na",
-			"na",
-			"na",
-			"na",
-			"na",
-			"na",
-			"na",
-			"na",
-			"na",
-			"na",
-			"na",
-			
-			"TotalArmor",
-			"TotalAd",
-			"TotalHp",
-			"FinalCooldownMod",
-			"TotalAp",
-			"TotalMs",
-			"na",
-			"na",
-			"na",
-			"na",
-			
-			"BonusAd",
-			"BonusHp",
-			"BonusMs",
-			"na",
-			"na",
-			"na",
-			"na",
-			"na",
-			"na",
-			"na",
-			"na",
-			"na",
-		};
-
-		LayoutInflater inflater;
-		double[] stats;
-		
-		public StatAdapter(Context context, double[] stats) {
-			this.stats = stats;
-			
-			inflater = LayoutInflater.from(context);
-		}
-		
-		@Override
-		public int getCount() {
-			return stats.length;
-		}
-
-		@Override
-		public Object getItem(int position) {
-			return stats[position];
-		}
-
-		@Override
-		public long getItemId(int position) {
-			return position;
-		}
-
-		@Override
-		public View getView(int position, View convertView, ViewGroup parent) {
-			ViewHolder holder;
-			
-			if (convertView == null) {
-				holder = new ViewHolder();
-				convertView = inflater.inflate(R.layout.item_raw_stat, parent, false);
-				holder.txtKey = (TextView) convertView.findViewById(R.id.txtKey);
-				holder.txtValue = (TextView) convertView.findViewById(R.id.txtValue);
-				
-				convertView.setTag(holder);
-			} else {
-				holder = (ViewHolder) convertView.getTag();
-			}
-			
-			holder.txtKey.setText(STAT_NAME[position]);
-			holder.txtValue.setText(stats[position] + "");
-			
-			return convertView;
-		}
-		
 	}
 }

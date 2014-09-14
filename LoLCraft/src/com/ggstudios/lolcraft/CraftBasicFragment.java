@@ -6,6 +6,7 @@ import android.annotation.SuppressLint;
 import android.graphics.Color;
 import android.graphics.drawable.TransitionDrawable;
 import android.os.Bundle;
+import android.os.Looper;
 import android.support.v4.app.FragmentManager;
 import android.text.Spannable;
 import android.text.SpannableStringBuilder;
@@ -37,6 +38,7 @@ import com.actionbarsherlock.app.SherlockFragment;
 import com.ggstudios.lolcraft.Build.BuildItem;
 import com.ggstudios.lolcraft.Build.BuildObserver;
 import com.ggstudios.lolcraft.Build.BuildRune;
+import com.ggstudios.lolcraft.ChampionInfo.OnFullyLoadedListener;
 import com.ggstudios.utils.DebugLog;
 import com.ggstudios.utils.Utils;
 import com.ggstudios.views.RearrangeableLinearLayout;
@@ -49,14 +51,19 @@ public class CraftBasicFragment extends SherlockFragment implements BuildObserve
 
 	public static final String EXTRA_CHAMPION_ID = "champId";
 
+	private static final int MAP_ID_SUMMONERS_RIFT = 1;
+
 	private static final int COLOR_ITEM_BONUS = 0xff0078ff;
 	private static final int COLOR_LEVEL_BONUS = 0xff09a818;
 
 	private static final int SCROLL_SPEED_PER_SEC_DP = 5;
 	private static final int SEEK_BAR_PADDING_DP = 10;
-	
+
 	private static final int ANIMATION_DURATION = 300;
 
+	private TextView lblPartype;
+	private TextView lblPartypeRegen;
+	
 	private TextView txtHp;
 	private TextView txtHpRegen;
 	private TextView txtMs;
@@ -87,7 +94,7 @@ public class CraftBasicFragment extends SherlockFragment implements BuildObserve
 	private int level;
 
 	private LayoutInflater inflater;
-	
+
 	private int seekBarPadding;
 
 	private static final DecimalFormat statFormat = new DecimalFormat("###.##");
@@ -96,7 +103,7 @@ public class CraftBasicFragment extends SherlockFragment implements BuildObserve
 	private void setStat(TextView tv, double base, double gain, int level, double itemBonus) {
 		setStat(tv, base, gain, level, itemBonus, statFormat);
 	}
-	
+
 	private void setStat(TextView tv, double base, double gain, int level, double itemBonus, DecimalFormat df) {
 		double levelBonus = gain * level;
 		double total = base + levelBonus + itemBonus;
@@ -116,7 +123,7 @@ public class CraftBasicFragment extends SherlockFragment implements BuildObserve
 
 		printStat(tv, total, itemBonus, 0, false, statFormat);
 	}
-	
+
 	private void setLevelessStat(TextView tv, double base, double gain, int level, double itemBonus, DecimalFormat df) {
 		double total = base + itemBonus;
 
@@ -160,6 +167,8 @@ public class CraftBasicFragment extends SherlockFragment implements BuildObserve
 		final int champId = getArguments().getInt(EXTRA_CHAMPION_ID);
 		champInfo = LibraryManager.getInstance().getChampionLibrary().getChampionInfo(champId);
 
+		lblPartype = (TextView) rootView.findViewById(R.id.lblMp);
+		lblPartypeRegen = (TextView) rootView.findViewById(R.id.lblMpRegen);
 		txtHp = (TextView) rootView.findViewById(R.id.txtHp);
 		txtHpRegen = (TextView) rootView.findViewById(R.id.txtHpRegen);
 		txtMs = (TextView) rootView.findViewById(R.id.txtMs);
@@ -178,6 +187,34 @@ public class CraftBasicFragment extends SherlockFragment implements BuildObserve
 		btnTrash = (ImageButton) rootView.findViewById(R.id.btnTrash);
 		runeContainer = (LinearLayout) rootView.findViewById(R.id.runes);
 		runeScrollView = (HorizontalScrollView) rootView.findViewById(R.id.runeScrollView);
+
+		champInfo.onFullyLoaded(new OnFullyLoadedListener() {
+
+			@Override
+			public void onFullyLoaded() {
+				switch (champInfo.partype) {
+				case ChampionInfo.TYPE_ENERGY:
+					lblPartype.setText(R.string.stat_energy);
+					lblPartypeRegen.setText(R.string.stat_energy_regen);
+					break;
+				case ChampionInfo.TYPE_BLOODWELL:
+					lblPartype.setText(R.string.stat_bloodwell);
+					txtMp.setVisibility(View.INVISIBLE);
+					lblPartypeRegen.setVisibility(View.INVISIBLE);
+					txtMpRegen.setVisibility(View.INVISIBLE);
+					break;
+				case ChampionInfo.TYPE_UNKNOWN:
+					lblPartype.setText(R.string.stat_unknown);
+					txtMp.setVisibility(View.INVISIBLE);
+					lblPartypeRegen.setVisibility(View.INVISIBLE);
+					txtMpRegen.setVisibility(View.INVISIBLE);
+					break;
+				default:
+					break;
+				}
+			}
+
+		});
 
 		updateStats();
 		updateBuild();
@@ -284,7 +321,7 @@ public class CraftBasicFragment extends SherlockFragment implements BuildObserve
 			}
 
 		});
-		
+
 		buildContainer.setOnItemDragListener(new OnItemDragListener() {
 
 			@Override
@@ -301,16 +338,16 @@ public class CraftBasicFragment extends SherlockFragment implements BuildObserve
 				TransitionDrawable transition = (TransitionDrawable) btnTrash.getBackground();
 				transition.reverseTransition(ANIMATION_DURATION);
 			}
-			
+
 		});
-		
+
 		buildContainer.post(new Runnable() {
 
 			@Override
 			public void run() {
 				buildContainer.setMinimumWidth(buildScrollView.getWidth());
 			}
-			
+
 		});
 
 		rootView.getViewTreeObserver().addOnGlobalLayoutListener(new OnGlobalLayoutListener() {
@@ -340,6 +377,7 @@ public class CraftBasicFragment extends SherlockFragment implements BuildObserve
 			public void onClick(View v) {
 				Bundle b = new Bundle();
 				b.putInt(ItemPickerDialogFragment.EXTRA_CHAMPION_ID, champId);
+				b.putInt(ItemPickerDialogFragment.EXTRA_MAP_ID, MAP_ID_SUMMONERS_RIFT);
 				FragmentManager fm = getActivity().getSupportFragmentManager();
 				ItemPickerDialogFragment dialog = new ItemPickerDialogFragment();
 				dialog.setArguments(b);
@@ -347,7 +385,7 @@ public class CraftBasicFragment extends SherlockFragment implements BuildObserve
 			}
 
 		});
-		
+
 		addRunes = (Button) rootView.findViewById(R.id.addRunes);
 		addRunes.setOnClickListener(new OnClickListener() {
 
@@ -397,11 +435,9 @@ public class CraftBasicFragment extends SherlockFragment implements BuildObserve
 
 		seekBar.setOnTouchListener(new OnTouchListener() {
 			@Override
-			public boolean onTouch(View v, MotionEvent event) 
-			{
+			public boolean onTouch(View v, MotionEvent event) {
 				int action = event.getAction();
-				switch (action) 
-				{
+				switch (action) {
 				case MotionEvent.ACTION_DOWN:
 					// Disallow ScrollView to intercept touch events.
 					v.getParent().requestDisallowInterceptTouchEvent(true);
@@ -425,21 +461,21 @@ public class CraftBasicFragment extends SherlockFragment implements BuildObserve
 	@Override 
 	public void onDestroyView() {
 		super.onDestroyView();
-		
+
 		final int runeCount = build.getRuneCount();
-		
+
 		for (int i = 0; i < runeCount; i++) {
 			build.getRune(i).tag = null;
 		}
 	}
-	
+
 	private void showView(View v) {
 		Animation ani = new AlphaAnimation(0f, 1f);
 		ani.setDuration(ANIMATION_DURATION);
 		v.setVisibility(View.VISIBLE);
 		v.startAnimation(ani);
 	}
-	
+
 	private void hideView(final View v) {
 		Animation ani = new AlphaAnimation(1f, 0f);
 		ani.setDuration(ANIMATION_DURATION);
@@ -455,12 +491,12 @@ public class CraftBasicFragment extends SherlockFragment implements BuildObserve
 
 			@Override
 			public void onAnimationRepeat(Animation animation) {}
-			
+
 		});
-		
+
 		v.startAnimation(ani);
 	}
-	
+
 	private void showSeekBar() {
 		showView(seekBar);
 	}
@@ -487,15 +523,19 @@ public class CraftBasicFragment extends SherlockFragment implements BuildObserve
 	}
 
 	@Override
-	public void onItemAdded(Build build, BuildItem item) {
-		updateBuild(item);
+	public void onItemAdded(Build build, BuildItem item, boolean isNewItem) {
+		if (isNewItem) {
+			updateBuild(item);
+		} else {
+			refreshAllItemViews();
+		}
 	}
-	
+
 	@Override
 	public void onRuneAdded(Build build, BuildRune rune) {
 		updateRunes(rune);
 	}
-	
+
 	@Override
 	public void onRuneRemoved(Build build, BuildRune rune) {
 		((BuildRuneView) rune.tag).removeSelf();
@@ -505,15 +545,20 @@ public class CraftBasicFragment extends SherlockFragment implements BuildObserve
 	public void onBuildStatsChanged() {
 		updateStats();
 	}
-	
+
 	private void updateStats() {
 		ChampionInfo info = champInfo;
 
 		setStat(txtHp, 			info.hp, 		info.hpG, 		level, build.getBonusHp(),			intStatFormat);
 		setStat(txtHpRegen, 	info.hpRegen, 	info.hpRegenG, 	level, build.getBonusHpRegen());
 		setLevelessStat(txtMs, 	info.ms, 		0, 				level, build.getBonusMs(), 	intStatFormat);
-		setStat(txtMp, 			info.mp, 		info.mpG, 		level, build.getBonusMp(),			intStatFormat);
-		setStat(txtMpRegen, 	info.mpRegen, 	info.mpRegenG, 	level, build.getBonusMpRegen());
+		if (info.partype == ChampionInfo.TYPE_MANA) {
+			setStat(txtMp, 			info.mp, 		info.mpG, 		level, build.getBonusMp(),			intStatFormat);
+			setStat(txtMpRegen, 	info.mpRegen, 	info.mpRegenG, 	level, build.getBonusMpRegen());
+		} else if (info.partype == ChampionInfo.TYPE_ENERGY) {
+			setStat(txtMp, 			info.mp, 		info.mpG, 		level, build.getBonusEnergy(),		intStatFormat);
+			setStat(txtMpRegen, 	info.mpRegen, 	info.mpRegenG, 	level, build.getBonusEnergyRegen());
+		}
 		setLevelessStat(txtRange, 	info.range, 0, 				level, build.getBonusRange());
 
 		setStat(txtAd, 			info.ad, 		info.adG, 		level, build.getBonusAd(),			intStatFormat);
@@ -526,15 +571,15 @@ public class CraftBasicFragment extends SherlockFragment implements BuildObserve
 	private void updateBuild() {
 		updateBuild(null);
 	}
-	
+
 	private void refreshAllItemViews() {
 		final int count = buildContainer.getChildCount();
-		
+
 		for (int i = 0; i < count; i++) {
 			View v = buildContainer.getChildAt(i);
 			BuildItem item = build.getItem(i);
 			ItemViewHolder holder = (ItemViewHolder) v.getTag();
-			
+
 			if (item.group != -1) {
 				holder.groupIndicator.setBackgroundColor(Build.getSuggestedColorForGroup(item.group));
 			} else {
@@ -544,13 +589,20 @@ public class CraftBasicFragment extends SherlockFragment implements BuildObserve
 					holder.groupIndicator.setBackground(null);
 				}
 			}
-			
+
+			if (item.count != 1) {
+				holder.count.setVisibility(View.VISIBLE);
+				holder.count.setText("" + item.count);
+			} else {
+				holder.count.setVisibility(View.INVISIBLE);
+			}
+
 			if (i >= build.getEnabledBuildEnd()) {
 				setAlphaForView(v, 0.5f);
 			} else {
 				setAlphaForView(v, 1f);
 			}
-			
+
 			if (item.active) {
 				v.setBackgroundColor(Color.GRAY);
 			} else {
@@ -560,11 +612,11 @@ public class CraftBasicFragment extends SherlockFragment implements BuildObserve
 					v.setBackground(null);
 				}
 			}
-			
-			
+
+
 		}
 	}
-	
+
 	private void setAlphaForView(View v, float alpha) {
 		if(android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.HONEYCOMB) {
 			AlphaAnimation animation = new AlphaAnimation(alpha, alpha);
@@ -575,13 +627,14 @@ public class CraftBasicFragment extends SherlockFragment implements BuildObserve
 			v.setAlpha(alpha);
 		}
 	}
-	
+
 	private View getChildView() {
 		View v = inflater.inflate(R.layout.item_in_build, buildContainer, false);
 		ItemViewHolder holder = new ItemViewHolder();
 		holder.groupIndicator = v.findViewById(R.id.groupIndicator);
+		holder.count = (TextView) v.findViewById(R.id.count);
 		v.setTag(holder);
-		
+
 		return v;
 	}
 
@@ -639,37 +692,38 @@ public class CraftBasicFragment extends SherlockFragment implements BuildObserve
 					seekBar.getLayoutParams().width = buildContainer.getChildAt(buildContainer.getChildCount() - 1).getRight() + seekBarPadding;
 					seekBar.requestLayout();
 				}
-				
+
 			});
 		} else {
 			seekBar.setVisibility(View.INVISIBLE);
 		}
-		
+
 		refreshAllItemViews();
 	}
-	
+
 	private void updateRunes() {
 		updateRunes(null);
 	}
-	
+
 	private void updateRunes(BuildRune rune) {
 		if (rune == null) {
 			runeContainer.removeAllViews();
-			
+
 			final int runeCount = build.getRuneCount();
-			
+
 			for (int i = 0; i < runeCount; i++) {
 				rune = build.getRune(i);
 				BuildRuneView v = (BuildRuneView) inflater.inflate(R.layout.item_rune_in_build, runeContainer, false);
 				v.bindBuildRune(rune);
-				
+
 				runeContainer.addView(v);
 				rune.tag = v;
 			}
 		} else {
 			BuildRuneView v = (BuildRuneView) inflater.inflate(R.layout.item_rune_in_build, runeContainer, false);
 			v.bindBuildRune(rune);
-			
+
+			runeContainer.addView(v);
 			runeScrollView.post(new Runnable() {
 
 				@Override
@@ -678,13 +732,13 @@ public class CraftBasicFragment extends SherlockFragment implements BuildObserve
 				}
 
 			});
-			
-			runeContainer.addView(v);
+
 			rune.tag = v;
 		}
 	}
-	
+
 	private class ItemViewHolder {
 		View groupIndicator;
+		TextView count;
 	}
 }

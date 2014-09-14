@@ -108,4 +108,15 @@ public class Utils {
 			DebugLog.e(TAG, e);
 		}
 	}
+	
+	public static void executeInBackground(final Runnable r) {
+		new AsyncTask<Void, Void, Void>() {
+
+			@Override
+			protected Void doInBackground(Void... params) {
+				r.run();
+				return null;
+			}
+		}.execute();
+	}
 }

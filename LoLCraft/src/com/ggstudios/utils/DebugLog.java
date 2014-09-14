@@ -10,6 +10,11 @@ public class DebugLog {
 			Log.d(tag, msg);
 	}
 	
+	public static void w(String tag, String msg) {
+		if (isLoggingEnabled)
+			Log.w(tag, msg);
+	}
+	
 	public static void e(String tag, String msg){
 		if(isLoggingEnabled)
 			Log.e(tag, msg);

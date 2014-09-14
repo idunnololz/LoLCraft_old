@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Stack;
 
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -25,20 +26,31 @@ public class Build {
 	private List<BuildItem> itemBuild;
 	private SparseIntArray itemDic;
 	
-	private static Map<String, Integer> statKeyToIndex;
-	
-	private static ItemLibrary itemLibrary;
-	
 	private ChampionInfo champ;
 	private int champLevel;
-	
-	private static final int FLAG_SCALING = 0x80000000;
 	
 	public static final int RUNE_TYPE_RED = 0;
 	public static final int RUNE_TYPE_BLUE = 1;
 	public static final int RUNE_TYPE_YELLOW = 2;
 	public static final int RUNE_TYPE_BLACK = 3;
 
+	private static final int[] RUNE_COUNT_MAX = new int[] {
+		9, 9, 9, 3
+	};
+	
+	private static final int[] GROUP_COLOR = new int[] {
+		0xff2ecc71,	// emerald
+		//0xffe74c3c,	// alizarin
+		0xff3498db,	// peter river
+		0xff9b59b6,	// amethyst
+		0xffe67e22,	// carrot
+		0xff34495e,	// wet asphalt
+		0xff1abc9c,	// turquoise
+		0xfff1c40f,	// sun flower
+	};
+	
+	private static final int FLAG_SCALING = 0x80000000;
+	
 	private static final int STAT_NULL = 0;
 	private static final int STAT_HP = 1;
 	private static final int STAT_HPR = 2;
@@ -74,28 +86,29 @@ public class Build {
 	private static final int STAT_CD_MOD = 43;
 	private static final int STAT_TOTAL_AP = 44;
 	private static final int STAT_TOTAL_MS = 45;
+	private static final int STAT_TOTAL_MR = 46;
+	private static final int STAT_AS = 47;
 	
 	private static final int STAT_BONUS_AD = 50;
 	private static final int STAT_BONUS_HP = 51;
 	private static final int STAT_BONUS_MS = 52;
 	private static final int STAT_BONUS_AP = 44;	// note that cause base AP is always 0, bonusAp always = totalAp
+	private static final int STAT_BONUS_AR = 53;
+	private static final int STAT_BONUS_MR = 54;
 
-	private static final int MAX_STATS = 60;
+	private static final int STAT_AA_DPS = 60;
+
+	private static final int MAX_STATS = 70;
 	private static final int MAX_ACTIVE_ITEMS = 6;
-
-	private List<BuildObserver> observers = new ArrayList<BuildObserver>();
-
-	private int enabledBuildStart = 0;
-	private int enabledBuildEnd = 0;
 	
-	private int currentGroupCounter = 0;
+	private static final String JSON_KEY_RUNES = "runes";
+	private static final String JSON_KEY_ITEMS = "items";
 	
-	private static final int[] RUNE_COUNT_MAX = new int[] {
-		9, 9, 9, 3
-	};
+	private static Map<String, Integer> statKeyToIndex;
 	
-	private int[] runeCount = new int[4];
-
+	private static ItemLibrary itemLibrary;
+	private static RuneLibrary runeLibrary;
+	
 	static {
 		statKeyToIndex = new HashMap<String, Integer>();
 		statKeyToIndex.put("FlatArmorMod", 			STAT_AR);
@@ -163,6 +176,8 @@ public class Build {
 		statKeyToIndex.put("armor", 				STAT_TOTAL_AR);
 		statKeyToIndex.put("bonusattackdamage", 	STAT_BONUS_AD);
 		statKeyToIndex.put("health", 				STAT_TOTAL_HP);
+		statKeyToIndex.put("bonusarmor", 			STAT_BONUS_AR);
+		statKeyToIndex.put("bonusspellblock", 		STAT_BONUS_MR);
 		
 		// special keys...
 		statKeyToIndex.put("@special.BraumWArmor", 	STAT_NULL);
@@ -171,18 +186,18 @@ public class Build {
 		statKeyToIndex.put("@cooldownchampion", 	STAT_CD_MOD);
 	}
 	
-	private static final int[] GROUP_COLOR = new int[] {
-		0xff2ecc71,	// emerald
-		//0xffe74c3c,	// alizarin
-		0xff3498db,	// peter river
-		0xff9b59b6,	// amethyst
-		0xffe67e22,	// carrot
-		0xff34495e,	// wet asphalt
-		0xff1abc9c,	// turquoise
-		0xfff1c40f,	// sun flower
-	};
+	private List<BuildObserver> observers = new ArrayList<BuildObserver>();
+
+	private int enabledBuildStart = 0;
+	private int enabledBuildEnd = 0;
+	
+	private int currentGroupCounter = 0;
+	
+	private int[] runeCount = new int[4];
 
 	private double[] stats = new double[MAX_STATS];
+	
+	private boolean itemBuildDirty = false;
 	
 	private OnRuneCountChangedListener onRuneCountChangedListener = new OnRuneCountChangedListener() {
 
@@ -200,6 +215,9 @@ public class Build {
 		
 		if (itemLibrary == null) {
 			itemLibrary = LibraryManager.getInstance().getItemLibrary();
+		}
+		if (runeLibrary == null) {
+			runeLibrary = LibraryManager.getInstance().getRuneLibrary();
 		}
 	}
 	
@@ -265,18 +283,45 @@ public class Build {
 	}
 
 	public void addItem(ItemInfo item) {
-		// check if ingredients of this item is already part of the build...
-		BuildItem buildItem = new BuildItem(item);
-		labelAllIngredients(buildItem, itemBuild.size());
-		
-		if (itemBuild.size() == enabledBuildEnd) {
-			enabledBuildEnd++;
+		addItem(item, 1, true);
+	}
+	
+	public void addItem(ItemInfo item, int count, boolean isAll) {
+		BuildItem buildItem = null;
+		BuildItem last = getLastItem();
+		if (last != null && item == last.info) {
+			if (item.stacks > last.count) {
+				last.count += count;
+				buildItem = last;
+			}
 		}
-		itemBuild.add(buildItem);
-		itemDic.put(item.id, itemDic.get(item.id, 0) + 1);
+		
+		if (isAll == false) {
+			itemBuildDirty = true;
+		}
+		
+		boolean itemNull = buildItem == null;
+		if (itemNull) {
+			buildItem = new BuildItem(item);
+			buildItem.count = Math.min(item.stacks, count);
+			// check if ingredients of this item is already part of the build...
+			labelAllIngredients(buildItem, itemBuild.size());
 
-		recalculateStats();
-		notifyItemAdded(buildItem);
+			if (itemBuild.size() == enabledBuildEnd) {
+				enabledBuildEnd++;
+			}
+			itemBuild.add(buildItem);
+			itemDic.put(item.id, itemDic.get(item.id, 0) + 1);
+		}
+
+		if (isAll) {
+			recalculateStats();
+			if (itemBuildDirty) {
+				itemBuildDirty = false;
+				buildItem = null;
+			}
+			notifyItemAdded(buildItem, itemNull);
+		}
 	}
 	
 	public void removeItemAt(int position) {
@@ -380,38 +425,44 @@ public class Build {
 		stats[STAT_CD_MOD] = 1.0 - stats[STAT_CDR];
 		stats[STAT_TOTAL_MS] = (stats[STAT_MS] + champ.ms) * stats[STAT_MSP] + stats[STAT_MS] + champ.ms;
 		stats[STAT_TOTAL_AP] = stats[STAT_AP] * (stats[STAT_APP] + 1);
+		stats[STAT_TOTAL_MR] = stats[STAT_MR] + champ.mr + champ.mrG * champLevel;
+		stats[STAT_AS] = champ.as * (1 + champLevel * champ.asG + stats[STAT_ASP]);
 		
 		stats[STAT_BONUS_AD] = stats[STAT_TOTAL_AD] - champ.ad;
 		stats[STAT_BONUS_HP] = stats[STAT_TOTAL_HP] - champ.hp;
 		stats[STAT_BONUS_MS] = stats[STAT_TOTAL_MS] - champ.ms;
+		stats[STAT_BONUS_AR] = stats[STAT_TOTAL_AR] - champ.ar;
+		stats[STAT_BONUS_MR] = stats[STAT_TOTAL_MR] - champ.mr;
+		
+		// pure stats...
+		stats[STAT_AA_DPS] = stats[STAT_TOTAL_AD] * stats[STAT_AS];
 	}
 	
 	public BuildRune addRune(RuneInfo rune) {
+		return addRune(rune, 1, true);
+	}
+	
+	public BuildRune addRune(RuneInfo rune, int count, boolean isAll) {
 		// Check if this rune is already in the build...
-		boolean found = false;
+		
 		BuildRune r = null;
 		for (BuildRune br : runeBuild) {
 			if (br.id == rune.id) {
 				r = br;
-				br.addRune();
-				
-				found = true;
 				break;
 			}
 		}
 
-		if (!found) {
+		if (r == null) {
 			r = new BuildRune(rune, rune.id);
 			runeBuild.add(r);
 			r.listener = onRuneCountChangedListener;
-			runeCount[rune.runeType]++;
-		}
-		
-		
-		recalculateStats();
-		if (!found) {
 			notifyRuneAdded(r);
 		}
+
+		r.addRune(count);
+		
+		recalculateStats();
 		
 		return r;
 	}
@@ -470,9 +521,9 @@ public class Build {
 		}
 	}
 
-	private void notifyItemAdded(BuildItem item) {
+	private void notifyItemAdded(BuildItem item, boolean isNewItem) {
 		for (BuildObserver o : observers) {
-			o.onItemAdded(this, item);
+			o.onItemAdded(this, item, isNewItem);
 		}
 	}
 	
@@ -520,8 +571,9 @@ public class Build {
 		return runeBuild.size();
 	}
 
-	public ItemInfo getLastItem() {
-		return itemBuild.get(itemBuild.size() - 1).info;
+	public BuildItem getLastItem() {
+		if (itemBuild.size() == 0) return null;
+		return itemBuild.get(itemBuild.size() - 1);
 	}
 
 	public double getBonusHp() {
@@ -533,11 +585,19 @@ public class Build {
 	}
 
 	public double getBonusMp() {
-		return stats[STAT_MP];
+		if (champ.partype == ChampionInfo.TYPE_MANA) {
+			return stats[STAT_MP];
+		} else {
+			return 0;
+		}
 	}
 
 	public double getBonusMpRegen() {
-		return stats[STAT_MPR];
+		if (champ.partype == ChampionInfo.TYPE_MANA) {
+			return stats[STAT_MPR];
+		} else {
+			return 0;
+		}
 	}
 
 	public double getBonusAd() {
@@ -566,6 +626,14 @@ public class Build {
 
 	public double getBonusAp() {
 		return stats[STAT_BONUS_AP];
+	}
+	
+	public double getBonusEnergy() {
+		return stats[STAT_NRG];
+	}
+	
+	public double getBonusEnergyRegen() {
+		return stats[STAT_NRGR];
 	}
 	
 	public double[] getRawStats() {
@@ -614,13 +682,52 @@ public class Build {
 		notifyBuildStatsChanged();
 	}
 	
+	public JSONObject toJson() throws JSONException {
+		JSONObject obj = new JSONObject();
+		JSONObject runes = new JSONObject();
+		JSONArray items = new JSONArray();
+		
+		for (BuildRune r : runeBuild) {
+			runes.put(r.info.key, r.count);
+		}
+		
+		for (BuildItem i : itemBuild) {
+			items.put(i.info.id);
+			items.put(i.count);
+		}
+		
+		obj.put(JSON_KEY_RUNES, runes);
+		obj.put(JSON_KEY_ITEMS, items);
+		
+		return obj;
+	}
+	
+	public void fromJson(JSONObject o) throws JSONException {
+		JSONObject runes = o.getJSONObject(JSON_KEY_RUNES);
+		JSONArray items = o.getJSONArray(JSON_KEY_ITEMS);
+		
+		Iterator<?> it = runes.keys();
+		while (it.hasNext()) {
+			String key = (String) it.next();
+			int count = runes.getInt(key);
+			addRune(runeLibrary.getRuneInfo(Integer.valueOf(key)), count, !it.hasNext());
+		}
+		
+		final int count = items.length();
+		for (int i = 0; i < count; i += 2) {
+			int itemId = items.getInt(i);
+			int c = items.getInt(i + 1);
+			addItem(itemLibrary.getItemInfo(itemId), c, i == count - 2);
+		}
+	}
+	
 	public static int getSuggestedColorForGroup(int groupId) {
 		return GROUP_COLOR[groupId % GROUP_COLOR.length];
 	}
 
 	public static interface BuildObserver {
 		public void onBuildChanged(Build build);
-		public void onItemAdded(Build build, BuildItem item);
+		public void onItemAdded(Build build, BuildItem item, boolean isNewItem);
 		public void onRuneAdded(Build build, BuildRune rune);
 		public void onRuneRemoved(Build build, BuildRune rune);
 		public void onBuildStatsChanged();
@@ -630,6 +737,8 @@ public class Build {
 		ItemInfo info;
 		int group = -1;
 		boolean active = true;
+		
+		int count = 1;
 		
 		List<BuildItem> from;
 		BuildItem to;
@@ -656,18 +765,22 @@ public class Build {
 		
 		private BuildRune(RuneInfo info, int id) {
 			this.info = info;
-			count = 1;
+			count = 0;
 			this.id = id;
 		}
 		
 		public void addRune() {
-			count++;
+			addRune(1);
+		}
+		
+		public void addRune(int n) {
+			count += n;
 			
 			int c = count;
 			
-			listener.onRuneCountChanged(this, count - 1, count);
+			listener.onRuneCountChanged(this, count - n, count);
 			if (c == count && onRuneCountChangedListener != null) {
-				onRuneCountChangedListener.onRuneCountChanged(this, count - 1, count);
+				onRuneCountChangedListener.onRuneCountChanged(this, count - n, count);
 			}
 		}
 		

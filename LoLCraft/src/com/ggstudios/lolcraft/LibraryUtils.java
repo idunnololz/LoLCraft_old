@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
@@ -25,11 +26,19 @@ import com.ggstudios.utils.DebugLog;
 
 import android.content.Context;
 import android.content.res.Resources;
+import android.graphics.drawable.Drawable;
 
 public class LibraryUtils {
 
 	// champion.json = https://na.api.pvp.net/api/lol/static-data/na/v1.2/champion?api_key=0daeb2cf-a0d0-4a94-a7b2-8b282e1a4336
 	// item json = https://na.api.pvp.net/api/lol/static-data/na/v1.2/item?api_key=0daeb2cf-a0d0-4a94-a7b2-8b282e1a4336
+	
+	private static HashMap<String, Integer> typeToEnum = new HashMap<String, Integer>();
+	static {
+		typeToEnum.put("Mana", ChampionInfo.TYPE_MANA);
+		typeToEnum.put("BloodWell", ChampionInfo.TYPE_BLOODWELL);
+		typeToEnum.put("Energy", ChampionInfo.TYPE_ENERGY);
+	}
 
 	private static final String TAG = "LibraryUtils";
 
@@ -43,6 +52,29 @@ public class LibraryUtils {
 		public void onStartLoadPortrait(List<ItemInfo> champs);
 		public void onPortraitLoad(int position, ItemInfo info);
 		public void onCompleteLoadPortrait(List<ItemInfo> champs);
+	}
+
+	public static void initItemLibrary(Context con) throws IOException, JSONException {
+		ItemLibrary lib = LibraryManager.getInstance().getItemLibrary();
+		if (lib.getAllItemInfo() == null) {
+			LibraryManager.getInstance().getItemLibrary()
+			.initialize(LibraryUtils.getAllItemInfo(con, null));
+		}
+	}
+
+	public static void initRuneLibrary(Context con) throws IOException, JSONException {
+		RuneLibrary lib = LibraryManager.getInstance().getRuneLibrary();
+		if (lib.getAllRuneInfo() == null) {
+			List<RuneInfo> runes = LibraryUtils.getAllRuneInfo(con);
+			LibraryManager.getInstance().getRuneLibrary()
+			.initialize(runes);
+
+			for (RuneInfo rune : runes) {
+				if (rune.icon == null) {
+					rune.icon = Drawable.createFromStream(con.getAssets().open("rune/" + rune.iconAssetName), null);
+				}
+			}
+		}
 	}
 
 	public static ChampionInfo completeChampionInfo(Context con, ChampionInfo info) {
@@ -156,6 +188,13 @@ public class LibraryUtils {
 			info.defense = stats.getInt("defense");
 			info.magic = stats.getInt("magic");
 			info.difficulty = stats.getInt("difficulty");
+			Integer result = typeToEnum.get(champData.getString("partype"));
+			if (result == null) {
+				info.partype = ChampionInfo.TYPE_UNKNOWN;
+				DebugLog.w(TAG, "Warning: Partype " + champData.getString("partype") + " unrecongnized!");
+			} else {
+				info.partype = result;
+			}
 
 			info.setSkills(skills);
 			info.fullyLoaded();
@@ -314,6 +353,20 @@ public class LibraryUtils {
 				info.stats = value.getJSONObject("stats");
 				info.uniquePassiveStat = value.optJSONObject("up");
 				info.colloq = value.getString("colloq");
+				info.stacks = value.optInt("stacks", info.stacks);
+				JSONObject maps = value.optJSONObject("maps");
+				if (maps != null) {
+					info.notOnMap = new HashSet<Integer>();
+
+					Iterator<?> i = maps.keys();
+					while (i.hasNext()) {
+						String k = (String) i.next();
+						boolean v = maps.getBoolean(k);
+						if (!v) {
+							info.notOnMap.add(Integer.valueOf(k));
+						}
+					}
+				}
 
 				info.from = new ArrayList<Integer>();
 				info.into = new ArrayList<Integer>();

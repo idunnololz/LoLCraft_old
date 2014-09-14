@@ -64,7 +64,7 @@ public class CraftSkillsFragment extends SherlockFragment {
 							public void onBuildChanged(Build build) {}
 
 							@Override
-							public void onItemAdded(Build build, BuildItem item) {}
+							public void onItemAdded(Build build, BuildItem item, boolean isNewItem) {}
 
 							@Override
 							public void onRuneAdded(Build build, BuildRune rune) {}

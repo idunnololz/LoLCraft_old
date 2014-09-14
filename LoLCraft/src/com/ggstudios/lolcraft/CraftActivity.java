@@ -1,14 +1,20 @@
 package com.ggstudios.lolcraft;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.support.v4.app.DialogFragment;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentPagerAdapter;
@@ -30,6 +36,7 @@ import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.actionbarsherlock.app.SherlockFragmentActivity;
 import com.actionbarsherlock.view.Menu;
@@ -51,6 +58,9 @@ public class CraftActivity extends SherlockFragmentActivity implements ItemPicke
 
 	public static final String EXTRA_CHAMPION_ID = "champId";
 
+	private static final String JSON_KEY_BUILD = "build";
+	private static final String JSON_KEY_LAST_BUILD = "unnamed";
+	
 	private static final int PARALLAX_WIDTH_DP = 20;
 	private static final int RESIZE_DURATION = 200;
 	private static final int FADE_IN_DURATION = 100;
@@ -87,6 +97,12 @@ public class CraftActivity extends SherlockFragmentActivity implements ItemPicke
 
 	private boolean panelOpen = false;
 	private boolean closingPanel = false;
+	
+	private SharedPreferences prefs;
+	
+	private JSONObject savedBuilds;
+	
+	private String buildKey;
 	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -191,6 +207,93 @@ public class CraftActivity extends SherlockFragmentActivity implements ItemPicke
 			}
 
 		}.execute(info);
+		
+		buildKey = champId + "_build";
+		
+		prefs = getSharedPreferences(
+		        getString(R.string.preference_file_key), Context.MODE_PRIVATE);
+		
+		if (savedInstanceState == null) {
+			// new instance!
+			// check if we got a saved build...
+			if (prefs.contains(buildKey)) {
+				// looks like there was a build saved!
+				try {
+					savedBuilds = new JSONObject(prefs.getString(buildKey, ""));
+					
+					if (savedBuilds.has(JSON_KEY_LAST_BUILD)) {
+						loadBuild(JSON_KEY_LAST_BUILD);
+					}
+				} catch (JSONException e) {
+					DebugLog.e(TAG, e);
+				}
+			}
+		} else {
+		}
+		
+		if (savedBuilds == null) {
+			savedBuilds = new JSONObject();
+		}
+	}
+	
+	@Override
+	protected void onPause() {
+		super.onPause();
+		
+		saveBuild(JSON_KEY_LAST_BUILD);
+		Toast.makeText(this, R.string.build_saved, Toast.LENGTH_LONG).show();
+	}
+	
+	private void saveBuild(String buildName) {
+		try {
+			JSONObject saveDat = new JSONObject();
+			saveDat.put(JSON_KEY_BUILD, build.toJson());
+			savedBuilds.put(buildName, saveDat);
+			
+			final SharedPreferences.Editor editor = prefs.edit(); 
+			editor.putString(buildKey, savedBuilds.toString());
+			
+			Utils.executeInBackground(new Runnable() {
+
+				@Override
+				public void run() {
+					editor.commit();
+				}
+				
+			});
+		} catch (JSONException e) {
+			DebugLog.e(TAG, e);
+		}
+	}
+	
+	private void loadBuild(final String buildName) {
+		new AsyncTask<Void, Void, Void>() {
+
+			@Override
+			protected Void doInBackground(Void... params) {
+				try {
+					LibraryUtils.initItemLibrary(getApplicationContext());
+					LibraryUtils.initRuneLibrary(getApplicationContext());
+					
+				} catch (JSONException e) {
+					DebugLog.e(TAG, e);
+				} catch (IOException e) {
+					DebugLog.e(TAG, e);
+				}
+				return null;
+			}
+			
+			@Override
+			protected void onPostExecute(Void result) {
+				try {
+					JSONObject savedDat = savedBuilds.getJSONObject(buildName);
+					build.fromJson(savedDat.getJSONObject(JSON_KEY_BUILD));
+				} catch (JSONException e) {
+					DebugLog.e(TAG, e);
+				}
+			}
+			
+		}.execute();
 	}
 	
 	private void bindPanelViews() {
@@ -329,16 +432,10 @@ public class CraftActivity extends SherlockFragmentActivity implements ItemPicke
 					}
 
 					@Override
-					public void onAnimationRepeat(Animation animation) {
-						// TODO Auto-generated method stub
-						
-					}
+					public void onAnimationRepeat(Animation animation) {}
 
 					@Override
-					public void onAnimationStart(Animation animation) {
-						// TODO Auto-generated method stub
-						
-					}
+					public void onAnimationStart(Animation animation) {}
 					
 				});
 				overlay.startAnimation(ani);
@@ -398,6 +495,10 @@ public class CraftActivity extends SherlockFragmentActivity implements ItemPicke
 			return true;
 		case R.id.action_feedback:
 			Utils.startFeedbackIntent(this);
+			return true;
+		case R.id.action_stat_summary:
+		    DialogFragment newFragment = StatSummaryDialogFragment.newInstance();
+		    newFragment.show(getSupportFragmentManager(), "dialog");
 			return true;
 		}
 		return super.onOptionsItemSelected(item);

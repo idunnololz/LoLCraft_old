@@ -38,12 +38,14 @@ public class ItemPickerDialogFragment extends DialogFragment {
 	private static final String TAG = "ItemPickerDialogFragment";
 	
 	public static final String EXTRA_CHAMPION_ID = "champId";
+	public static final String EXTRA_MAP_ID = "mapId";
 
 	private GridView content;
 	private List<ItemInfo> items;
 	private EditText searchField;
 	
 	private int champId = -1;
+	private int mapId = -1;
 	
 	@Override
 	public Dialog onCreateDialog(Bundle savedInstanceState) {
@@ -83,6 +85,14 @@ public class ItemPickerDialogFragment extends DialogFragment {
 	        public void onTextChanged(CharSequence s, int start, int before, int count){}
 	    }); 
 		
+		Bundle args = getArguments();
+		if (args != null) {
+			champId = args.getInt(EXTRA_CHAMPION_ID, -1);
+			mapId = args.getInt(EXTRA_MAP_ID, -1);
+			
+			DebugLog.d(TAG, "MapId: " + mapId);
+		}
+		
 		if (items == null) {
 			initializeItemInfo();
 		} else {
@@ -114,11 +124,6 @@ public class ItemPickerDialogFragment extends DialogFragment {
 			
 		});
 		
-		Bundle args = getArguments();
-		if (args != null) {
-			champId = args.getInt(EXTRA_CHAMPION_ID, -1);
-		}
-		
 		return rootView;
 	}
 	
@@ -143,6 +148,12 @@ public class ItemPickerDialogFragment extends DialogFragment {
 				.getItemLibrary().getPurchasableItemInfo();
 		
 		for (ItemInfo i : fullList) {
+			if (i.notOnMap != null) {
+				if (i.notOnMap.contains(mapId)) {
+					continue;
+				}
+			}
+			
 			if (i.requiredChamp != null) {
 				if (champLib.getChampionInfo(i.requiredChamp) == info) {
 					items.add(i);

@@ -15,6 +15,12 @@ import com.ggstudios.utils.DebugLog;
 import android.graphics.drawable.Drawable;
 
 public class ChampionInfo {
+	public static final int TYPE_UNKNOWN = -1;
+	public static final int TYPE_MANA = 1;
+	public static final int TYPE_ENERGY = 2;
+	public static final int TYPE_BLOODWELL = 3;
+	
+	
 	int id;
 	Drawable icon;
 	String name;
@@ -29,6 +35,8 @@ public class ChampionInfo {
 	int defense;
 	int magic;
 	int difficulty;
+	
+	int partype;
 
 	double hp;
 	double hpG;
